@@ -3,6 +3,8 @@ function preload(){
   doorClosed = loadImage("Bilder/doorClosed.svg");
   doorOpen = loadImage("Bilder/doorOpen.svg");
   enemySlime = loadImage("Bilder/enemySchleim.svg");
+  enemySlimeDead = loadImage("Bilder/enemySchleimTod.svg");
+
 }
 
 function setup() {
@@ -12,6 +14,7 @@ function setup() {
   doorOpen.loadPixels();
   img.loadPixels();
   enemySlime.loadPixels();
+  enemySlimeDead.loadPixels();
 }
 
 window.addEventListener("resize", function() {

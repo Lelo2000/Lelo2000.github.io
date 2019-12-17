@@ -118,6 +118,7 @@ function draw() {
   enemyMove();
   enemyCollision();
   time++;
+  image(enemySlimeDead,10,10,16,16);
 }
 
 
@@ -479,24 +480,28 @@ function enemySpawn() {
     hp: 0,
     skin: -2,
     isDead: false,
-    spawnTime: 10
+    spawnTime: 10,
+    img: []
   };
   switch(rnd){
     case 0:
         enemy.speed= 3;
-        enemy.size= 8;
+        enemy.size= 18;
         enemy.maxHp= 15;
+        enemy.img = [enemySlime,enemySlimeDead];
       break;
     case 1:
         enemy.speed= 2;
-        enemy.size= 20;
+        enemy.size= 40;
         enemy.maxHp= 60;
+        enemy.img = [enemySlime,enemySlimeDead];
       break;
     case 2:
         enemy.speed= 2;
-        enemy.size= 10;
+        enemy.size= 30;
         enemy.maxHp= 60;
         enemy.aSpeed = 20;
+        enemy.img = [enemySlime,enemySlimeDead];
     break;
   }
   let rndPos = rndPositionInRoom(enemy.size);
@@ -590,30 +595,18 @@ function enemyAttack(){
     }
 }
 function enemyDraw(){
-    //Skin -2 ist am Aufwachen | Skin -1 ist Tod | Skin 0 ist am Leben
+    //Skin -2 ist am Aufwachen | Skin 1 ist Tod | Skin 0 ist am Leben
     push();
   for(let j in room.deadEnemys){
     fill(0);
-    circle(room.deadEnemys[j].x,room.deadEnemys[j].y,room.deadEnemys[j].size);
+    imageMode(CENTER);    
+    image(room.deadEnemys[j].img[1],room.deadEnemys[j].x,room.deadEnemys[j].y,room.deadEnemys[j].size,room.deadEnemys[j].size);
   }  
   for(let i in room.enemys){
     if(room.enemys[i].spawnTime <= 0)
         room.enemys[i].skin = 0;  
-      switch(room.enemys[i].skin){
-        case -2:
-            fill(255,100,156);
-            break;
-        case 0: 
-            if(room.enemys[i].type === 0){
-                fill("green");
-            }else if(room.enemys[i].type === 2){
-                fill("blue");
-            }else{
-                fill("red");
-            }
-        break;
-      }
-      circle(room.enemys[i].x,room.enemys[i].y,room.enemys[i].size);
+    imageMode(CENTER);    
+    image(room.enemys[i].img[0],room.enemys[i].x,room.enemys[i].y,room.enemys[i].size,room.enemys[i].size);
   }
   drawLifebar();
   pop();
@@ -823,7 +816,7 @@ function drawDoors(){
     if(room.doors[i].isOpen === true){
       image(room.doors[i].img[1],room.doors[i].x,room.doors[i].y,40,40);
     }else{
-      image(room.doors[i].img[0],room.doors[i].x,room.doors[i].y,30,40);
+      image(room.doors[i].img[0],room.doors[i].x,room.doors[i].y,34,40);
     }
   }
   pop();
@@ -986,7 +979,7 @@ function colRObjRObj(obj1,obj2){
     dx = abs(obj1.x - obj2 .x);
     dy = abs(obj1.y - obj2 .y);
     d = betrag([dx,dy]);
-    if(d < obj1.size+obj2.size){
+    if(d < obj1.size/2+obj2.size/2){
         return true;
     } 
     return false;
