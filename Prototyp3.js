@@ -1,7 +1,3 @@
-function preload(){
-  img = loadImage("Bilder/Feuerball.svg");
-}
-
 //Objekte
 let player = {
   x: 0,
@@ -36,7 +32,8 @@ let enemy = {
   maxHp: 0,
   hp: 0,
   skin: 0,
-  isDead: false
+  isDead: false,
+  img: []
 };
 let door={
   x:0,
@@ -45,7 +42,8 @@ let door={
   sy: 40,
   isOpen: false,
   direction: 0,
-  skin: 0
+  skin: 0,
+  img: []
 };
 let room = {
   x: 0,
@@ -95,11 +93,14 @@ let drawingMap = true;
 let time = 0;
 let inventoryPos =[width/2 + 300,height/2-200];
 //GameSetup
-
-mapGeneration();
-roomChange();
-playerSetup();
+let start = false;
 function draw() {
+  if(start === false){
+    mapGeneration();
+    roomChange(-1);
+    playerSetup();
+    start = true;
+  }
   clear();
   roomDraw();
   if(drawingMap=== true)
@@ -721,11 +722,7 @@ function roomChange(direc){
       room = map[i];
     }
   }
-  // Spieler wird gesetzt
-  player.x = room.rStartpoint[0];
-  player.y = room.rStartpoint[1];
-  // Raum wird in die Karte Aufgenommen
-  // Raum Inhalt wird generiert
+   // Raum Inhalt wird generiert
   roomGeneration();
   // Spieler wird zur Tür gesetzt
     if(direc === 0){
@@ -740,6 +737,9 @@ function roomChange(direc){
   }else if(direc === 3){
     player.x = searchDoor(1).x+20;
     player.y = searchDoor(1).y-1;
+  }else{
+    player.x = room.rStartpoint[0];
+    player.y = room.rStartpoint[1];
   }
   if(enemyCountAlive() <= 0){
     openDoors(true);
@@ -778,39 +778,41 @@ function roomDraw() {
 }
 function setDoors(){
   //console.log("Türen werden gesetzt");
-  let i = getInPointArray(player.xMap, player.yMap - 1, map); 
+  let i = getInPointArray(player.xMap, player.yMap - 1, map);
+  if(typeof doorClosed !== "undefined"){ 
   if( i>=0){
     if(map[i].rTyp === -2){
-      room.doors.push({x:width/2-20, y: height/2 - room.rSizeY/2,sx:40,sy:40,isOpen:true,direction:3,skin: 1});
+      room.doors.push({x:width/2-20, y: height/2 - room.rSizeY/2,sx:40,sy:40,isOpen:true,direction:3,img: [doorClosed,doorOpen]});
     }else{
-    room.doors.push({x:width/2-20, y: height/2 - room.rSizeY/2,sx:40,sy:40,isOpen:true,direction:3,skin: 0});
+      room.doors.push({x:width/2-20, y: height/2 - room.rSizeY/2,sx:40,sy:40,isOpen:true,direction:3,img: [doorClosed,doorOpen]});
     }
+    console.log("Türen oben esetzt");
   }
-  //console.log("Türen oben esetzt");
+  }
   i = getInPointArray(player.xMap - 1, player.yMap, map);
   if ( i>=0) {
     if(map[i].rTyp === -2){
-      room.doors.push({x:width/2 -room.rSizeX/2 ,y:height/2 -20,sx:40,sy:40, isOpen:true,direction:2,skin: 1});  
+      room.doors.push({x:width/2 -room.rSizeX/2 ,y:height/2 -20,sx:40,sy:40, isOpen:true,direction:2,img: [doorClosed,doorOpen]});  
     }else{
-      room.doors.push({x:width/2 -room.rSizeX/2 ,y:height/2 -20,sx:40,sy:40, isOpen:true,direction:2,skin: 0});  
+      room.doors.push({x:width/2 -room.rSizeX/2 ,y:height/2 -20,sx:40,sy:40, isOpen:true,direction:2,img: [doorClosed,doorOpen]});  
     }  
   }
   //console.log("Türen links esetzt");
   i= getInPointArray(player.xMap, player.yMap + 1, map);
   if (i >=0) {
     if(map[i].rTyp === -2){
-      room.doors.push({x:width/2-20,y:height/2 + room.rSizeY/2-40,sx:40,sy:40,isOpen:true,direction:1,skin: 1});
+      room.doors.push({x:width/2-20,y:height/2 + room.rSizeY/2-40,sx:40,sy:40,isOpen:true,direction:1,img: [doorClosed,doorOpen]});
     }else{
-      room.doors.push({x:width/2-20,y:height/2 + room.rSizeY/2-40,sx:40,sy:40,isOpen:true,direction:1,skin: 0});
+      room.doors.push({x:width/2-20,y:height/2 + room.rSizeY/2-40,sx:40,sy:40,isOpen:true,direction:1,img: [doorClosed,doorOpen]});
     }
   }
   //console.log("Türen unten esetzt");
   i = getInPointArray(player.xMap + 1, player.yMap, map);
   if (i >= 0) {
     if(map[i].rTyp === -2){
-      room.doors.push({x:width/2+ room.rSizeX/2-40,y:height/2 -20,sx:40,sy:40, iOpen: true,direction:0,skin: 1});
+      room.doors.push({x:width/2+ room.rSizeX/2-40,y:height/2 -20,sx:40,sy:40, iOpen: true,direction:0,img: [doorClosed,doorOpen]});
     }else{
-      room.doors.push({x:width/2+ room.rSizeX/2-40,y:height/2 -20,sx:40,sy:40, iOpen: true,direction:0,skin: 0});
+      room.doors.push({x:width/2+ room.rSizeX/2-40,y:height/2 -20,sx:40,sy:40, iOpen: true,direction:0,img: [doorClosed,doorOpen]});
     }
   }
 }
@@ -819,14 +821,10 @@ function drawDoors(){
   fill(100);
   for(let i in room.doors){
     if(room.doors[i].isOpen === true){
-      fill(0,255,255);
+      image(room.doors[i].img[1],room.doors[i].x,room.doors[i].y,40,40);
     }else{
-      fill(100);
+      image(room.doors[i].img[0],room.doors[i].x,room.doors[i].y,30,40);
     }
-    if(room.doors[i].skin === 1){
-      fill("red");
-    }
-    rect(room.doors[i].x,room.doors[i].y,40,40);
   }
   pop();
 }
