@@ -118,7 +118,6 @@ function draw() {
   enemyMove();
   enemyCollision();
   time++;
-  image(enemySlimeDead,10,10,16,16);
 }
 
 
@@ -566,6 +565,13 @@ function enemyMove(){
                         room.enemys[i].y = room.enemys[i].y + room.enemys[i].speed;
                     }    
                 }
+              let vx = [-1, 0];
+              let vy = [room.enemys[i].x - player.x, room.enemys[i].y - player.y];
+              let a = acos((vx[0] * vy[0] + vx[1] * vy[1]) / (betrag(vx) * betrag(vy)));
+              if (player.y < room.enemys[i].y) {
+                  a = -a;
+              }
+              room.enemys[i].rot = a;
             }else{
                 room.enemys[i].spawnTime--;
             }
@@ -598,15 +604,23 @@ function enemyDraw(){
     //Skin -2 ist am Aufwachen | Skin 1 ist Tod | Skin 0 ist am Leben
     push();
   for(let j in room.deadEnemys){
+    push();
     fill(0);
-    imageMode(CENTER);    
-    image(room.deadEnemys[j].img[1],room.deadEnemys[j].x,room.deadEnemys[j].y,room.deadEnemys[j].size,room.deadEnemys[j].size);
+    imageMode(CENTER);  
+    translate(room.deadEnemys[j].x,room.deadEnemys[j].y);
+    rotate(room.deadEnemys[j].rot);  
+    image(room.deadEnemys[j].img[1],0,0,room.deadEnemys[j].size,room.deadEnemys[j].size);
+    pop();
   }  
   for(let i in room.enemys){
+    push();
     if(room.enemys[i].spawnTime <= 0)
         room.enemys[i].skin = 0;  
-    imageMode(CENTER);    
-    image(room.enemys[i].img[0],room.enemys[i].x,room.enemys[i].y,room.enemys[i].size,room.enemys[i].size);
+    imageMode(CENTER); 
+    translate(room.enemys[i].x,room.enemys[i].y);
+    rotate(room.enemys[i].rot);
+    image(room.enemys[i].img[0],0,0,room.enemys[i].size,room.enemys[i].size);
+    pop();
   }
   drawLifebar();
   pop();
