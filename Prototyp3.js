@@ -1,5 +1,5 @@
 function preload(){
-  img = loadImage("Feuerball.svg");
+  img = loadImage("Bilder/Feuerball.svg");
 }
 
 //Objekte
