@@ -78,7 +78,8 @@ let item = {
   size:0,
   type:0,
   isConsumable: false,
-  skin:0
+  skin:0,
+  img: []
 };
 let ersteller = {
   x: 10,
@@ -322,7 +323,7 @@ function playerDrawinventory(){
           fill(0,100,255);
         break;
       }
-      rect(inventoryPos[0]+ix*50,inventoryPos[1] +50*iy,50,50);
+      image(player.inventory[i].img[0],inventoryPos[0]+ix*50,inventoryPos[1] +50*iy,50,50);
       ix++;
       if(ix >= 5){
         iy++;
@@ -419,7 +420,8 @@ function itemSpawn(type,x,y){
         size:0,
         type:0,
         isConsumable: false,
-        skin:0
+        skin:0,
+        img: []
     };
     let rnd = random(type);
     //Positive Consumabels Negative Ausrüstungen
@@ -428,38 +430,28 @@ function itemSpawn(type,x,y){
         case -2:
             item.size =  7;
             item.isConsumable = false;
+            item.img = [healingPotion];
         break;
         case -1:
-            item.size =  7;
+            item.size =  30;
             item.isConsumable = false;
+            item.img = [healingPotion];
         break;
         case 0:
             item.size =  5;
             item.isConsumable = true;
+            item.img = [healingPotion];
         break;
         case 1:
             item.size =  5;
             item.isConsumable = true;
+            item.img = [healingPotion];
         break;
     }
 }
 function itemDraw(){
     for(let i in room.items){
-        switch(room.items[i].type){
-            case -2:
-                fill(0,100,255);
-            break;    
-            case -1:
-                fill(255,100,0);
-            break;  
-            case 0:
-                fill("red");
-            break;
-            case 1:
-                fill("blue");
-            break;
-        }
-        circle(room.items[i].x,room.items[i].y,room.items[i].size);
+      image(room.items[i].img[0],room.items[i].x,room.items[i].y,room.items[i].size,room.items[i].size);
     }
 }
 //Gegner
@@ -670,7 +662,7 @@ function roomSet(rTyp) {
         room.rSizeX= 469;
         room.rSizeY= 430;
         room.rShape= 0;
-        room.rItemCount = 1;
+        room.rItemCount = 2;
         room.rItemType = [-1];
         room.rStartpoint= [width/2, height/2];
       break;

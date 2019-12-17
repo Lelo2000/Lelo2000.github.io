@@ -5,6 +5,7 @@ function preload(){
   enemySlime = loadImage("Bilder/enemySchleim.svg");
   enemySlimeDead = loadImage("Bilder/enemySchleimTod.svg");
   enemySlimeSpawning = loadImage("Bilder/enemySchleimSpawning.svg");
+  healingPotion = loadImage("Bilder/healingPotion.svg");
 
 }
 
@@ -17,6 +18,7 @@ function setup() {
   enemySlime.loadPixels();
   enemySlimeDead.loadPixels();
   enemySlimeSpawning.loadPixels();
+  healingPotion.loadPixels();
 }
 
 window.addEventListener("resize", function() {
