@@ -1,9 +1,13 @@
 function setup() {
-  var p5canvas = createCanvas(600, 600);
+  createCanvas(windowWidth, windowHeight);
   frameRate(30);
-  p5canvas.parent("p5Canvas");
 }
 
+window.addEventListener("resize", function() {
+  resizeCanvas(windowWidth, windowHeight);
+  clear();
+});
+
 new p5();
-var width = 600;
-var height = 600;
+var width = windowWidth;
+var height = windowHeight;
