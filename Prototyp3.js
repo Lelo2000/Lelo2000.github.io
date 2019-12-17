@@ -477,9 +477,9 @@ function enemySpawn() {
     aModus:0,
     maxHp: 0,
     hp: 0,
-    skin: -2,
+    skin: 2,
     isDead: false,
-    spawnTime: 10,
+    spawnTime: 20,
     img: []
   };
   switch(rnd){
@@ -487,20 +487,20 @@ function enemySpawn() {
         enemy.speed= 3;
         enemy.size= 18;
         enemy.maxHp= 15;
-        enemy.img = [enemySlime,enemySlimeDead];
+        enemy.img = [enemySlime,enemySlimeDead,enemySlimeSpawning];
       break;
     case 1:
         enemy.speed= 2;
         enemy.size= 40;
         enemy.maxHp= 60;
-        enemy.img = [enemySlime,enemySlimeDead];
+        enemy.img = [enemySlime,enemySlimeDead,enemySlimeSpawning];
       break;
     case 2:
         enemy.speed= 2;
         enemy.size= 30;
         enemy.maxHp= 60;
         enemy.aSpeed = 20;
-        enemy.img = [enemySlime,enemySlimeDead];
+        enemy.img = [enemySlime,enemySlimeDead,enemySlimeSpawning];
     break;
   }
   let rndPos = rndPositionInRoom(enemy.size);
@@ -601,7 +601,7 @@ function enemyAttack(){
     }
 }
 function enemyDraw(){
-    //Skin -2 ist am Aufwachen | Skin 1 ist Tod | Skin 0 ist am Leben
+    //Skin 2 ist am Aufwachen | Skin 1 ist Tod | Skin 0 ist am Leben
     push();
   for(let j in room.deadEnemys){
     push();
@@ -619,7 +619,7 @@ function enemyDraw(){
     imageMode(CENTER); 
     translate(room.enemys[i].x,room.enemys[i].y);
     rotate(room.enemys[i].rot);
-    image(room.enemys[i].img[0],0,0,room.enemys[i].size,room.enemys[i].size);
+    image(room.enemys[i].img[room.enemys[i].skin],0,0,room.enemys[i].size,room.enemys[i].size);
     pop();
   }
   drawLifebar();
