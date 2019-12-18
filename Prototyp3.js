@@ -128,6 +128,7 @@ function draw() {
   enemyAttack();
   enemyMove();
   enemyCollision();
+  drawSkillHover();
   time++;
 }
 
@@ -468,7 +469,7 @@ function setSkills(type){
         cooldownTimer: 0,
         name: "Feuer Hölle",
         img: [firehell_skillbar],
-        flavorText: ""
+        flavorText: "Verschieße unkontrolliebar viele Feuerbälle"
       };
       break;
   }
@@ -481,7 +482,6 @@ function playerDrawSkillbar(){
     fill(0,0,0,100);
     noStroke();
     let rectHoehe = (player.skills[i].cooldown - player.skills[i].cooldownTimer) * (50 / player.skills[i].cooldown);
-    console.log( player.skills[i].cooldownTimer); 
     rect(skillbarPos[0]+(i*60),skillbarPos[1]+50,50,-rectHoehe);
     pop();
     if(i === player.aModus){
@@ -490,6 +490,28 @@ function playerDrawSkillbar(){
       strokeWeight(4);
       noFill();
       rect(skillbarPos[0]+(i*60),skillbarPos[1],50,50);
+      pop();
+    }
+  }
+}
+function drawSkillHover(){
+  for(let i = 0; i < player.skills.length; i++){
+    if(colPointBox(mouseX,mouseY,skillbarPos[0] + (i*60),skillbarPos[1],50,50)){
+      push();
+      fill(0,0,0,140);
+      rect(mouseX,mouseY-120,200,120);
+      noStroke();
+      fill(255);
+      textSize(14);
+      text(player.skills[i].name,mouseX +3,mouseY - 106);
+      fill(255,0,0);
+      text("Damage: " +player.skills[i].damage,mouseX + 3,mouseY - 90);
+      fill(0,0,255);
+      text("Mana: " + player.skills[i].mana,mouseX +85,mouseY - 90);
+      fill(255);
+      textSize(10);
+      textStyle(ITALIC);
+      text(player.skills[i].flavorText,mouseX +3,mouseY - 75,190,120);
       pop();
     }
   }
