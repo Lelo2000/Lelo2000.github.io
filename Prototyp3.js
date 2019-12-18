@@ -7,8 +7,6 @@ let player = {
   rot: 0,
   speed: 0,
   aModus: 0,
-  aSpeed: 0,
-  aTime: 0,
   hp: 0,
   maxHp: 0,
   maxMana: 0,
@@ -17,7 +15,17 @@ let player = {
   invincibleTime: 0,
   skin: 0,
   size: 20,
-  inventory: []
+  inventory: [],
+  skills : []
+};
+let skill = {
+  damage: 0,
+  mana: 0,
+  type: 0,
+  cooldown: 0,
+  cooldownTimer: 0,
+  name: "",
+  img: []
 };
 let enemy = {
   x: 0,
@@ -93,6 +101,8 @@ let mapSize = 20;
 let drawingMap = true;
 let time = 0;
 let inventoryPos =[width/2 + 300,height/2-200];
+let skillbarPos =[width/2 -120,height/2+225];
+
 //GameSetup
 let start = false;
 function draw() {
@@ -132,8 +142,6 @@ function playerSetup() {
     rot: 0,
     speed: 7,
     aModus: 0,
-    aSpeed: 10,
-    aTime: 0,
     hp: 40,
     maxHp: 40,
     maxMana: 50,
@@ -142,11 +150,19 @@ function playerSetup() {
     invincibleTime:0,
     skin: 0,
     size: 20,
-    inventory:[]
+    inventory:[],
+    skills : []
   };
+  setSkills(0);
+  setSkills(1);
+  setSkills(2);
 }
 function playerControll() {
-  player.aTime++;
+  for(let i in player.skills){
+    if(player.skills[i].cooldownTimer < player.skills[i].cooldown){
+      player.skills[i].cooldownTimer++;
+    }
+  }
   //Bewegunf
   //w
   if (keyIsDown(87) && inRoom(player.x,player.y-20)) {
@@ -175,48 +191,52 @@ function playerControll() {
     player.hp = player.maxHp;
 }
   //AngriffsAuswahl
-  if (keyIsDown(81)) {
+  if (keyIsDown(49) && player.skills.length >= 1) {
     player.aModus = 0;
-    player.aSpeed = 10;
   }
-  if (keyIsDown(69)) {
+  if (keyIsDown(50)&& player.skills.length >= 2) {
     player.aModus = 1;
-    player.aSpeed = 15;
   }
-  if(keyIsDown(49)){
+  if(keyIsDown(51)&& player.skills.length >= 3){
     player.aModus = 2;
-    player.aSpeed = 1;
+  }
+  if(keyIsDown(52)&& player.skills.length >= 4){
+    player.aModus = 3;
   }
   //Angriff
   if (mouseIsPressed) {
-    let vx = [1, 0];
-    let vy = [mouseX - player.x, mouseY - player.y];
-    let a = acos((vx[0] * vy[0] + vx[1] * vy[1]) / (betrag(vx) * betrag(vy)));
-    if (mouseY < player.y) {
-      a = -a;
-    }
-    player.rot = a;
-    if(player.aTime > player.aSpeed){
-      playerAttack();
-      player.aTime = 0;
+    if(mouseX< width/2+300){
+      let vx = [1, 0];
+      let vy = [mouseX - player.x, mouseY - player.y];
+      let a = acos((vx[0] * vy[0] + vx[1] * vy[1]) / (betrag(vx) * betrag(vy)));
+      if (mouseY < player.y) {
+        a = -a;
+      }
+      player.rot = a;
+      if(player.skills[player.aModus].cooldownTimer >= player.skills[player.aModus].cooldown){
+        playerAttack();
+        player.skills[player.aModus].cooldownTimer = 0;
+      }
     }
   }
 }
 function playerAttack() {
-    if(player.aModus === 0 && player.mana > 5){
+  if(player.mana > player.skills[player.aModus].mana){
+    if(player.skills[player.aModus].type === 0){
         bulletSpawn(player.rot,0,player.x,player.y);
-        player.mana = player.mana -5;
+        player.mana = player.mana -player.skills[player.aModus].mana;
     }
-    if(player.aModus === 1 && player.mana>10){
-        bulletSpawn(player.rot,0,player.x,player.y);
+    if(player.skills[player.aModus].type === 1){
+        bulletSpawn(player.rot,0,player.x,player.y,5);
         bulletSpawn(player.rot+0.15,0,player.x,player.y);
         bulletSpawn(player.rot-0.15,0,player.x,player.y);
-        player.mana = player.mana -10;
+        player.mana = player.mana -player.skills[player.aModus].mana;
     }
-    if(player.aModus === 2 && player.mana>2){
+    if(player.skills[player.aModus].type === 2){
       bulletSpawn(random(0,5),0,player.x,player.y);
-      player.mana = player.mana -2;
+      player.mana = player.mana -player.skills[player.aModus].mana;
   }
+}
 }
 function playerCollision() {
   //Türen  
@@ -256,12 +276,8 @@ function playerCollision() {
   //Gegnerische Kugeln
   for(let i in bullets){
       if(bullets[i].type < 0 && colRObjRObj(bullets[i],player)){
-          switch(bullets[i].type){
-              case -1:
-                  player.hp = player.hp-2;
-                  bullets.splice(i,1);
-              break;    
-          }
+            player.hp = player.hp-bullets[i].damage;
+            bullets.splice(i,1);    
       }
   }
   //Items
@@ -309,6 +325,7 @@ function playerDraw() {
   pop();
   playerLifebar();
   playerDrawinventory();
+  playerDrawSkillbar();
 }
 function playerDrawinventory(){
   let ix = 0;
@@ -373,16 +390,19 @@ function bulletSpawn(rot,type,x,y){
   rot:rot,
   size:0,
   speed:0,
-  type:type
+  type:type,
+  damage: 0
   };
   switch(type){
     case -1:
       bullet.size = 5;
       bullet.speed = 10;
+      bullet.damage = 10;
       break;
     case 0:
       bullet.size = 16;
       bullet.speed = 9;
+      bullet.damage = 15;
       break;  
   }
   bullets.push(bullet);
@@ -406,11 +426,73 @@ function bulletDraw(){
       imageMode(CENTER);
       translate(bullets[i].x,bullets[i].y);
       rotate(bullets[i].rot);
-      image(img,0,0,bullets[i].size*2,bullets[i].size);
+      image(fireball,0,0,bullets[i].size*2,bullets[i].size);
       pop();
     }
   }
   pop();
+}
+//Skills
+function setSkills(type){
+  switch(type){
+    case 0:
+      skill = {
+        damage: 15,
+        mana: 5,
+        type: type,
+        cooldown: 10,
+        cooldownTimer: 0,
+        name: "Feuerball",
+        img: [fireball_skillbar],
+        flavorText:"Ein mächtiger Feuerball der deine Gegner zerschmettert"
+      };
+      break;
+    case 1:
+      skill = {
+        damage: 15,
+        mana: 10,
+        type: type,
+        cooldown: 15,
+        cooldownTimer: 0,
+        name: "Dreifacher Feuerball",
+        img: [trippelFireball_skillbar],
+        flavorText: "Drei kleinere Feuerbälle, um mehrere Gegner gleichzeitig zu besiegen"
+      };
+      break;
+    case 2:
+      skill = {
+        damage: 15,
+        mana: 2,
+        type: type,
+        cooldown: 1,
+        cooldownTimer: 0,
+        name: "Feuer Hölle",
+        img: [firehell_skillbar],
+        flavorText: ""
+      };
+      break;
+  }
+  player.skills.push(skill);
+}
+function playerDrawSkillbar(){
+  for(let i= 0 ;i<player.skills.length; i++){
+    image(player.skills[i].img[0],skillbarPos[0]+(i*60),skillbarPos[1],50,50);
+    push();
+    fill(0,0,0,100);
+    noStroke();
+    let rectHoehe = (player.skills[i].cooldown - player.skills[i].cooldownTimer) * (50 / player.skills[i].cooldown);
+    console.log( player.skills[i].cooldownTimer); 
+    rect(skillbarPos[0]+(i*60),skillbarPos[1]+50,50,-rectHoehe);
+    pop();
+    if(i === player.aModus){
+      push();
+      stroke(0);
+      strokeWeight(4);
+      noFill();
+      rect(skillbarPos[0]+(i*60),skillbarPos[1],50,50);
+      pop();
+    }
+  }
 }
 // Items
 function itemSpawn(type,x,y){
@@ -506,11 +588,7 @@ function enemyCollision(){
         if(room.enemys[j].isDead === false){
             for(let i in bullets){
                 if(colRObjRObj(room.enemys[j], bullets[i])&& bullets[i].type>-1){
-                    switch(bullets[i].type){
-                        case 0:
-                         enemyDamage(room.enemys[j],15);
-                        break;
-                    }
+                    enemyDamage(room.enemys[j],bullets[i].damage);
                     bullets.splice(i,1);
                     if(room.enemys[j].isDead){
                       room.deadEnemys.push(room.enemys[j]);
@@ -538,6 +616,7 @@ function enemyDamage(enemy,damage){
         }
         if (enemyCountAlive() <= 0){
             openDoors(true);
+            player.mana = player.maxMana;
         }
     }
 }
