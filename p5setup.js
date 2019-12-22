@@ -9,6 +9,8 @@ function preload(){
   enemySlimeDead = loadImage("Bilder/enemySchleimTod.svg");
   enemySlimeSpawning = loadImage("Bilder/enemySchleimSpawning.svg");
   healingPotion = loadImage("Bilder/healingPotion.svg");
+  manaItem = loadImage("Bilder/Manapoint.svg");
+  lifeItem = loadImage("Bilder/Lifepoint.svg");
 
 }
 
@@ -25,6 +27,8 @@ function setup() {
   fireball_skillbar.loadPixels();
   trippelFireball_skillbar.loadPixels();
   firehell_skillbar.loadPixels();
+  manaItem.loadPixels();
+  lifeItem.loadPixels();
 }
 
 window.addEventListener("resize", function() {

@@ -228,13 +228,13 @@ function playerAttack() {
         player.mana = player.mana -player.skills[player.aModus].mana;
     }
     if(player.skills[player.aModus].type === 1){
-        bulletSpawn(player.rot,0,player.x,player.y,5);
-        bulletSpawn(player.rot+0.15,0,player.x,player.y);
-        bulletSpawn(player.rot-0.15,0,player.x,player.y);
+        bulletSpawn(player.rot,1,player.x,player.y,5);
+        bulletSpawn(player.rot+0.15,1,player.x,player.y);
+        bulletSpawn(player.rot-0.15,1,player.x,player.y);
         player.mana = player.mana -player.skills[player.aModus].mana;
     }
     if(player.skills[player.aModus].type === 2){
-      bulletSpawn(random(0,5),0,player.x,player.y);
+      bulletSpawn(random(2*PI),1,player.x,player.y);
       player.mana = player.mana -player.skills[player.aModus].mana;
   }
 }
@@ -392,7 +392,8 @@ function bulletSpawn(rot,type,x,y){
   size:0,
   speed:0,
   type:type,
-  damage: 0
+  damage: 0,
+  img: []
   };
   switch(type){
     case -1:
@@ -404,6 +405,13 @@ function bulletSpawn(rot,type,x,y){
       bullet.size = 16;
       bullet.speed = 9;
       bullet.damage = 15;
+      bullet.img = [fireball];
+      break; 
+    case 1:
+      bullet.size = 12;
+      bullet.speed = 11;
+      bullet.damage = 10;
+      bullet.img = [fireball];
       break;  
   }
   bullets.push(bullet);
@@ -427,7 +435,7 @@ function bulletDraw(){
       imageMode(CENTER);
       translate(bullets[i].x,bullets[i].y);
       rotate(bullets[i].rot);
-      image(fireball,0,0,bullets[i].size*2,bullets[i].size);
+      image(bullets[i].img[0],0,0,bullets[i].size*2,bullets[i].size);
       pop();
     }
   }
@@ -450,7 +458,7 @@ function setSkills(type){
       break;
     case 1:
       skill = {
-        damage: 15,
+        damage: 10,
         mana: 10,
         type: type,
         cooldown: 15,
@@ -462,8 +470,8 @@ function setSkills(type){
       break;
     case 2:
       skill = {
-        damage: 15,
-        mana: 2,
+        damage: 10,
+        mana: 1,
         type: type,
         cooldown: 1,
         cooldownTimer: 0,
@@ -537,19 +545,22 @@ function itemSpawn(type,x,y){
             item.img = [healingPotion];
         break;
         case -1:
+            //Lebenstrank
             item.size =  30;
             item.isConsumable = false;
             item.img = [healingPotion];
         break;
         case 0:
-            item.size =  5;
+            //Gedroppte Lebenitems
+            item.size =  10;
             item.isConsumable = true;
-            item.img = [healingPotion];
+            item.img = [lifeItem];
         break;
         case 1:
-            item.size =  5;
+            // Gedroppte Manaitems
+            item.size =  10;
             item.isConsumable = true;
-            item.img = [healingPotion];
+            item.img = [manaItem];
         break;
     }
 }
@@ -764,7 +775,7 @@ function roomSet(rTyp) {
         room.rSizeY= 430;
         room.rShape= 0;
         room.rItemCount = 2;
-        room.rItemType = [-1];
+        room.rItemType = [0,-1];
         room.rStartpoint= [width/2, height/2];
       break;
     case -2:
@@ -992,7 +1003,7 @@ function mapGeneration() {
     } else if (rnd === 1) {
       ersteller.y = ersteller.y + 1;
     } else if (rnd === 2) {
-      ersteller.x = ersteller.x - 1;
+      ersteller.x = ersteller.x + 1;
     } else if (rnd === 3) {
       ersteller.y = ersteller.y - 1;
     }
