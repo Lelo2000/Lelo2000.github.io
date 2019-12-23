@@ -234,7 +234,7 @@ function playerControll() {
       }
       player.rot = a;
       player.skin = 1;
-      if(player.skills[player.aModus].cooldownTimer >= player.skills[player.aModus].cooldown){
+      if(player.skills[player.aModus].cooldownTimer >= player.skills[player.aModus].cooldown && player.mana > player.skills[player.aModus].mana){
         playerAttack();
         player.skills[player.aModus].cooldownTimer = 0;
       }
@@ -250,7 +250,6 @@ function playerAttack() {
   if (mouseY < bulletY) {
     bulletA = -bulletA;
   }
-  if(player.mana > player.skills[player.aModus].mana){
     if(player.skills[player.aModus].type === 0){
         bulletSpawn(bulletA,0,bulletX,bulletY);
         player.mana = player.mana -player.skills[player.aModus].mana;
@@ -264,7 +263,6 @@ function playerAttack() {
     if(player.skills[player.aModus].type === 2){
       bulletSpawn(random(2*PI),1,bulletX,bulletY);
       player.mana = player.mana -player.skills[player.aModus].mana;
-  }
   }
 }
 function playerCollision() {
