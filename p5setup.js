@@ -11,7 +11,12 @@ function preload(){
   healingPotion = loadImage("Bilder/healingPotion.svg");
   manaItem = loadImage("Bilder/Manapoint.svg");
   lifeItem = loadImage("Bilder/Lifepoint.svg");
-
+  startButton = loadImage("Bilder/startButton.svg");
+  startButton = loadImage("Bilder/startButton.svg");
+  buttonPause = loadImage("Bilder/buttonPause.svg");
+  buttonWeiter = loadImage("Bilder/buttonWeiter.svg");
+  mageFire = loadImage("Bilder/mageFire.svg");
+  mageFire_shoot1 = loadImage("Bilder/mageFire_shoot1.svg");
 }
 
 function setup() {
@@ -29,6 +34,9 @@ function setup() {
   firehell_skillbar.loadPixels();
   manaItem.loadPixels();
   lifeItem.loadPixels();
+  startButton.loadPixels();
+  mageFire.loadPixels();
+  mageFire_shoot1.loadPixels();
 }
 
 window.addEventListener("resize", function() {

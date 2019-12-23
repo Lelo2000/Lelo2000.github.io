@@ -16,7 +16,8 @@ let player = {
   skin: 0,
   size: 20,
   inventory: [],
-  skills : []
+  skills : [],
+  img: []
 };
 let skill = {
   damage: 0,
@@ -93,6 +94,15 @@ let ersteller = {
   x: 10,
   y: 10
 };
+let buttons = [];
+  let button = {
+    x:0,
+    y:0,
+    sx: 0,
+    sy: 0,
+    id: 0,
+    img: []
+  };
 //Arrays
 let map = [];
 let bullets = [];
@@ -102,34 +112,41 @@ let drawingMap = true;
 let time = 0;
 let inventoryPos =[width/2 + 300,height/2-200];
 let skillbarPos =[width/2 -120,height/2+225];
-
+// Sagt wenn ein Menu gezeichnet werden muss
+// 0 keins 1 StartMenu
+let menueNow = 1;
 //GameSetup
 let start = false;
 function draw() {
+  clear();
   if(start === false){
     mapGeneration();
     roomChange(-1);
     playerSetup();
+    switchMenue(menueNow);
     start = true;
   }
-  clear();
-  roomDraw();
-  if(drawingMap=== true)
-    mapDraw();
-  drawDoors();
-  enemyDraw();
-  itemDraw();  
-  playerControll();
-  playerDraw();
-  playerCollision();
-  bulletMove();
-  bulletDraw();
-  bulletCollision();
-  enemyAttack();
-  enemyMove();
-  enemyCollision();
-  drawSkillHover();
-  time++;
+  if(menueNow === 0){
+    clear();
+    roomDraw();
+    if(drawingMap=== true)
+      mapDraw();
+    drawDoors();
+    enemyDraw();
+    itemDraw();  
+    playerControll();
+    playerDraw();
+    playerCollision();
+    bulletMove();
+    bulletDraw();
+    bulletCollision();
+    enemyAttack();
+    enemyMove();
+    enemyCollision();
+    drawSkillHover();
+    time++;
+  }
+  menueDraw();
 }
 
 
@@ -150,15 +167,17 @@ function playerSetup() {
     mana: 25,
     invincibleTime:0,
     skin: 0,
-    size: 20,
+    size: 30,
     inventory:[],
-    skills : []
+    skills : [],
+    img: [mageFire, mageFire_shoot1]
   };
   setSkills(0);
   setSkills(1);
   setSkills(2);
 }
 function playerControll() {
+  player.skin=0;
   for(let i in player.skills){
     if(player.skills[i].cooldownTimer < player.skills[i].cooldown){
       player.skills[i].cooldownTimer++;
@@ -214,6 +233,7 @@ function playerControll() {
         a = -a;
       }
       player.rot = a;
+      player.skin = 1;
       if(player.skills[player.aModus].cooldownTimer >= player.skills[player.aModus].cooldown){
         playerAttack();
         player.skills[player.aModus].cooldownTimer = 0;
@@ -222,22 +242,30 @@ function playerControll() {
   }
 }
 function playerAttack() {
+  bulletX = player.x+35*cos(player.rot-0.89);
+  bulletY = player.y+35*sin(player.rot-0.89);
+  let vx = [1, 0];
+  let vy = [mouseX - bulletX, mouseY - bulletY];
+  let bulletA = acos((vx[0] * vy[0] + vx[1] * vy[1]) / (betrag(vx) * betrag(vy)));
+  if (mouseY < bulletY) {
+    bulletA = -bulletA;
+  }
   if(player.mana > player.skills[player.aModus].mana){
     if(player.skills[player.aModus].type === 0){
-        bulletSpawn(player.rot,0,player.x,player.y);
+        bulletSpawn(bulletA,0,bulletX,bulletY);
         player.mana = player.mana -player.skills[player.aModus].mana;
     }
     if(player.skills[player.aModus].type === 1){
-        bulletSpawn(player.rot,1,player.x,player.y,5);
-        bulletSpawn(player.rot+0.15,1,player.x,player.y);
-        bulletSpawn(player.rot-0.15,1,player.x,player.y);
+        bulletSpawn(bulletA,1,bulletX,bulletY,5);
+        bulletSpawn(bulletA+0.15,1,bulletX,bulletY);
+        bulletSpawn(bulletA-0.15,1,bulletX,bulletY);
         player.mana = player.mana -player.skills[player.aModus].mana;
     }
     if(player.skills[player.aModus].type === 2){
-      bulletSpawn(random(2*PI),1,player.x,player.y);
+      bulletSpawn(random(2*PI),1,bulletX,bulletY);
       player.mana = player.mana -player.skills[player.aModus].mana;
   }
-}
+  }
 }
 function playerCollision() {
   //Türen  
@@ -315,14 +343,16 @@ function playerDraw() {
   rotate(player.rot);
   translate(0, 0);
   rectMode(CENTER);
-  if(player.invincibleTime> 0){
-    fill(255,0,255);
-  }else{
-    fill(255);
-  }
-  circle(0, 0, player.size);
-  fill("green");
-  arc(0, 0, player.size*2, player.size*2, -HALF_PI, HALF_PI);
+  imageMode(CENTER);
+  // if(player.invincibleTime> 0){
+  //   fill(255,0,255);
+  // }else{
+  //   fill(255);
+  // }
+  //circle(0, 0, player.size);
+  // fill("green");
+  // arc(0, 0, player.size*2, player.size*2, -HALF_PI, HALF_PI);
+  image(player.img[player.skin],0,0,player.size*3,player.size*3);
   pop();
   playerLifebar();
   playerDrawinventory();
@@ -486,6 +516,8 @@ function setSkills(type){
 function playerDrawSkillbar(){
   for(let i= 0 ;i<player.skills.length; i++){
     image(player.skills[i].img[0],skillbarPos[0]+(i*60),skillbarPos[1],50,50);
+    fill(0);
+    text(i+1,skillbarPos[0]+23+(i*60),skillbarPos[1]+53,50,50);
     push();
     fill(0,0,0,100);
     noStroke();
@@ -566,7 +598,10 @@ function itemSpawn(type,x,y){
 }
 function itemDraw(){
     for(let i in room.items){
+      push();
+      imageMode(CENTER);
       image(room.items[i].img[0],room.items[i].x,room.items[i].y,room.items[i].size,room.items[i].size);
+      pop();
     }
 }
 //Gegner
@@ -774,8 +809,8 @@ function roomSet(rTyp) {
         room.rSizeX= 469;
         room.rSizeY= 430;
         room.rShape= 0;
-        room.rItemCount = 2;
-        room.rItemType = [0,-1];
+        room.rItemCount = 1;
+        room.rItemType = [-1];
         room.rStartpoint= [width/2, height/2];
       break;
     case -2:
@@ -1044,6 +1079,7 @@ function mousePressed() {
       }
     }   
   }
+  onMenueClicked();
 }
 function getMouseInventoryClick(){
   if(mouseX > inventoryPos[0] && mouseX < inventoryPos[0] + 250 && mouseY > inventoryPos[1] && mouseY < inventoryPos[1] + 250)
@@ -1131,5 +1167,105 @@ function rndOutcome(p){
     return true;
   }else{
     return false;
+  }
+}
+
+
+//Menues
+function menueDraw(){
+  if(menueNow === 2){
+    roomDraw();
+    if(drawingMap=== true)
+    mapDraw();
+    drawDoors();
+    enemyDraw();
+    itemDraw(); 
+    playerDraw();
+    bulletDraw();
+  }
+  switch(menueNow){
+    case 2:
+      push();
+      noStroke();
+      fill(50,50,50,30);
+      rect(0,0,width,height);
+      pop();
+    break;  
+  }
+  drawButtons();
+}
+function onMenueClicked(){
+  for(let i in buttons){
+    if(colPointBox(mouseX,mouseY,buttons[i].x,buttons[i].y,buttons[i].sx,buttons[i].sy)){
+      buttonClicked(buttons[i].id);
+      return;
+    }
+  }
+}
+function switchMenue(id){
+  //1:StartMenue, 2: PauseMenue
+  buttons = [];
+  menueNow = id;
+  switch(id){
+    case 0:
+      setButton(width/2+350,height/2-260,1);
+    break;
+    case 1:
+      setButton(width/2-50,height/2-25,0);
+    break;  
+    case 2:
+      setButton(width/2-50,height/2-25,2);
+    break;    
+  }
+}
+
+function drawButtons(i){
+  push();
+  for(let i in buttons){
+    image(buttons[i].img[0],buttons[i].x ,buttons[i].y,buttons[i].sx,buttons[i].sy);
+  }
+  pop();
+}
+function setButton(x,y,id){
+  button = {
+    x:x,
+    y:y,
+    sx: 0,
+    sy: 0,
+    id: id,
+    img: []
+  };
+  switch(id){
+    // 0: Start,1: Pause,2: weiter
+    case 0:
+      button.sx = 100;
+      button.sy  = 50;
+      button.img = [startButton];
+      break;
+    case 1:
+      button.sx = 70;
+      button.sy  = 25;
+      button.img = [buttonPause];
+      break;
+    case 2:
+      button.sx = 100;
+      button.sy  = 50;
+      button.img = [buttonWeiter];
+    break;
+  }
+  buttons.push(button);
+}
+function buttonClicked(id){
+  //1:StartMenue, 2PauseMenue
+  switch(id){
+    case 0:
+    switchMenue(0);
+    break;
+    case 1:
+    switchMenue(2);
+    break;
+    case 2:
+    switchMenue(0);
+    break;
   }
 }

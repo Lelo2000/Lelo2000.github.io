@@ -1,8 +1,9 @@
-let menueType = 1;
 let menue = {
   type: 0,
   buttons: []
 };
+let menues = [];
+let menueNow = 0;
 let button = {
   x:0,
   y:0,
@@ -11,28 +12,36 @@ let button = {
   id: 0,
   img: []
 };
-setMenue(menueType);
+setMenues();
+switchMenue(0);
 function draw(){
   clear();
-  drawMenue(menueType);
+  drawMenue(menue.type);
 }
+
 function drawMenue(type){
   for(let i in menue.buttons){
     drawButton(i);
   }
   text("Hallo",100,100);
 }
-function setMenue(type){
-  switch(type){
-    case 1:
-      setButton(50,50,0);
-      setButton(50,250,1); 
-    break;
-    case 2:
-      setButton(150,50,0);
-      setButton(50,50,1); 
-    break;  
-  }
+function switchMenue(i){
+  menue = menues[i];
+}
+function setMenues(){
+  menues.push({type: 0,
+    buttons: [setButton(50,50,0),
+              setButton(50,250,1) ]
+  });
+  menues.push({type: 1,
+    buttons: [setButton(150,50,0),
+              setButton(50,50,1)]
+  });
+  menues.push({type: 2,
+    buttons: [setButton(150,50,0),
+              setButton(50,50,1),
+              setButton(250,50,1)]
+  });
 }
 function onMenueClicked(){
   for(let i in menue.buttons){
@@ -42,7 +51,7 @@ function onMenueClicked(){
   }
 }
 function mousePressed(){
-  if(menueType != 0){
+  if(menue.type >= 0){
     onMenueClicked();
   }
 }
@@ -81,16 +90,16 @@ function setButton(x,y,id){
       button.img = [];
       break;
   }
-  menue.buttons.push(button);
+  return button;
 }
 function buttonClicked(id){
   switch(id){
     case 0:
-      console.log("Hi");
-      break;
+    switchMenue(0);
+    break;
     case 1:
-      console.log("Kuchen");
-      break;
+    switchMenue(2);
+    break;
   }
 }
 function colPointBox(x,y,bx,by,bsx,bsy){
