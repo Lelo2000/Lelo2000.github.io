@@ -17,6 +17,12 @@ function preload(){
   buttonWeiter = loadImage("Bilder/buttonWeiter.svg");
   mageFire = loadImage("Bilder/mageFire.svg");
   mageFire_shoot1 = loadImage("Bilder/mageFire_shoot1.svg");
+  mageFireShield = loadImage("Bilder/mageFireShield.svg");
+  enemyFireMage = loadImage("Bilder/enemyFireMage.svg");
+  enemyFireMageAttack = loadImage("Bilder/enemyFireMageAttack.svg");
+  enemyFireMageDead = loadImage("Bilder/enemyFireMageDead.svg");
+  enemyFireball = loadImage("Bilder/enemyFireball.svg");
+
 }
 
 function setup() {
@@ -37,6 +43,11 @@ function setup() {
   startButton.loadPixels();
   mageFire.loadPixels();
   mageFire_shoot1.loadPixels();
+  mageFireShield.loadPixels();
+  enemyFireMage.loadPixels();
+  enemyFireMageAttack.loadPixels();
+  enemyFireMageDead.loadPixels();
+  enemyFireball.loadPixels();
 }
 
 window.addEventListener("resize", function() {

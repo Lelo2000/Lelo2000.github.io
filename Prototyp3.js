@@ -17,7 +17,8 @@ let player = {
   size: 20,
   inventory: [],
   skills : [],
-  img: []
+  img: [],
+  animation:0
 };
 let skill = {
   damage: 0,
@@ -42,6 +43,7 @@ let enemy = {
   hp: 0,
   skin: 0,
   isDead: false,
+  animation : 0,
   img: []
 };
 let door={
@@ -167,17 +169,18 @@ function playerSetup() {
     mana: 25,
     invincibleTime:0,
     skin: 0,
-    size: 30,
+    size: 60,
     inventory:[],
     skills : [],
-    img: [mageFire, mageFire_shoot1]
+    img: [mageFire, mageFire_shoot1,mageFireShield],
+    animation: 0
   };
   setSkills(0);
   setSkills(1);
   setSkills(2);
+  setSkills(3);
 }
 function playerControll() {
-  player.skin=0;
   for(let i in player.skills){
     if(player.skills[i].cooldownTimer < player.skills[i].cooldown){
       player.skills[i].cooldownTimer++;
@@ -233,8 +236,8 @@ function playerControll() {
         a = -a;
       }
       player.rot = a;
-      player.skin = 1;
-      if(player.skills[player.aModus].cooldownTimer >= player.skills[player.aModus].cooldown && player.mana > player.skills[player.aModus].mana){
+      player.animation = 1;
+      if(player.skills[player.aModus].cooldownTimer >= player.skills[player.aModus].cooldown && player.mana > player.skills[player.aModus].mana && player.invincibleTime <= 0){
         playerAttack();
         player.skills[player.aModus].cooldownTimer = 0;
       }
@@ -252,18 +255,20 @@ function playerAttack() {
   }
     if(player.skills[player.aModus].type === 0){
         bulletSpawn(bulletA,0,bulletX,bulletY);
-        player.mana = player.mana -player.skills[player.aModus].mana;
     }
     if(player.skills[player.aModus].type === 1){
         bulletSpawn(bulletA,1,bulletX,bulletY,5);
         bulletSpawn(bulletA+0.15,1,bulletX,bulletY);
         bulletSpawn(bulletA-0.15,1,bulletX,bulletY);
-        player.mana = player.mana -player.skills[player.aModus].mana;
     }
     if(player.skills[player.aModus].type === 2){
       bulletSpawn(random(2*PI),1,bulletX,bulletY);
-      player.mana = player.mana -player.skills[player.aModus].mana;
-  }
+    }
+    if(player.skills[player.aModus].type === 3){
+      player.invincibleTime += 2;   
+    }
+    player.mana = player.mana -player.skills[player.aModus].mana;
+
 }
 function playerCollision() {
   //Türen  
@@ -290,9 +295,6 @@ function playerCollision() {
       return;     
     }
   }
-  if(player.invincibleTime > 0){
-    player.invincibleTime--;
-  }
   //Monster
   for(let i in room.enemys){
     if(colRObjRObj(player,room.enemys[i]) && player.invincibleTime <= 0 && room.enemys[i].isDead === false && room.enemys[i].spawnTime <= 0){
@@ -303,7 +305,8 @@ function playerCollision() {
   //Gegnerische Kugeln
   for(let i in bullets){
       if(bullets[i].type < 0 && colRObjRObj(bullets[i],player)){
-            player.hp = player.hp-bullets[i].damage;
+            if(player.invincibleTime <= 0)
+              player.hp = player.hp-bullets[i].damage;
             bullets.splice(i,1);    
       }
   }
@@ -334,23 +337,33 @@ function playerCollision() {
         }
     }
   }
+  if(player.invincibleTime > 0){
+    player.invincibleTime--;
+  }
+}
+function playerAnimation(){
+  if(player.animation === 0){
+    player.skin = 0;
+  }
+  if(player.animation === 1){
+    player.skin = 1;
+    player.animation = 0;
+  }
+  if(player.invincibleTime > 0){
+    player.skin = 2;
+  }
 }
 function playerDraw() {
+  playerAnimation();
   push();
   translate(player.x, player.y);
   rotate(player.rot);
   translate(0, 0);
   rectMode(CENTER);
   imageMode(CENTER);
-  // if(player.invincibleTime> 0){
-  //   fill(255,0,255);
-  // }else{
-  //   fill(255);
-  // }
-  //circle(0, 0, player.size);
-  // fill("green");
-  // arc(0, 0, player.size*2, player.size*2, -HALF_PI, HALF_PI);
-  image(player.img[player.skin],0,0,player.size*3,player.size*3);
+  image(player.img[player.skin],0,0,player.size*1.5,player.size*1.5);
+  fill(0,0,0,50);
+  //ellipse(0,0,player.size,player.size);
   pop();
   playerLifebar();
   playerDrawinventory();
@@ -423,7 +436,14 @@ function bulletSpawn(rot,type,x,y){
   damage: 0,
   img: []
   };
+  // type >= 0 Spieler || Type<0 gegener
   switch(type){
+    case -2:
+      bullet.size = 12;
+      bullet.speed = 12;
+      bullet.damage = 6;
+      bullet.img = [enemyFireball]
+      break;
     case -1:
       bullet.size = 5;
       bullet.speed = 10;
@@ -506,6 +526,18 @@ function setSkills(type){
         name: "Feuer Hölle",
         img: [firehell_skillbar],
         flavorText: "Verschieße unkontrolliebar viele Feuerbälle"
+      };
+      break;
+      case 3:
+      skill = {
+        damage: 0,
+        mana: 1,
+        type: type,
+        cooldown: 1,
+        cooldownTimer: 0,
+        name: "Magisches Schild",
+        img: [firehell_skillbar],
+        flavorText: "Schützte dich mit einem Magischen Schild, der Angriffe abwehrt."
       };
       break;
   }
@@ -619,7 +651,9 @@ function enemySpawn() {
     hp: 0,
     skin: 2,
     isDead: false,
+    animation: 0,
     spawnTime: 20,
+    //Normales Bild, Bild beim Tod, Bild beim spawnen, Bild beim Angreifen
     img: []
   };
   switch(rnd){
@@ -627,20 +661,27 @@ function enemySpawn() {
         enemy.speed= 3;
         enemy.size= 18;
         enemy.maxHp= 15;
-        enemy.img = [enemySlime,enemySlimeDead,enemySlimeSpawning];
+        enemy.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
       break;
     case 1:
         enemy.speed= 2;
         enemy.size= 40;
         enemy.maxHp= 60;
-        enemy.img = [enemySlime,enemySlimeDead,enemySlimeSpawning];
+        enemy.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
       break;
     case 2:
         enemy.speed= 2;
         enemy.size= 30;
         enemy.maxHp= 60;
         enemy.aSpeed = 20;
-        enemy.img = [enemySlime,enemySlimeDead,enemySlimeSpawning];
+        enemy.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
+    break;
+    case 3:
+        enemy.speed= 0;
+        enemy.size= 50;
+        enemy.maxHp= 350;
+        enemy.aSpeed = 25;
+        enemy.img = [enemyFireMage,enemyFireMageDead,enemyFireMage,enemyFireMageAttack];
     break;
   }
   let rndPos = rndPositionInRoom(enemy.size);
@@ -718,11 +759,14 @@ function enemyMove(){
 function enemyAttack(){
     for(let i in room.enemys){
         if(room.enemys[i].isDead === false){
+          let vx = 0;
+          let vy = 0;
+          let a = 0;
             switch(room.enemys[i].type){
                 case 2:
-                    let vx = [-1, 0];
-                    let vy = [room.enemys[i].x - player.x+random(-10,10), room.enemys[i].y - player.y+random(-10,10)];
-                    let a = acos((vx[0] * vy[0] + vx[1] * vy[1]) / (betrag(vx) * betrag(vy)));
+                    vx = [-1, 0];
+                    vy = [room.enemys[i].x - player.x+random(-10,10), room.enemys[i].y - player.y+random(-10,10)];
+                    a = acos((vx[0] * vy[0] + vx[1] * vy[1]) / (betrag(vx) * betrag(vy)));
                     if (player.y < room.enemys[i].y) {
                         a = -a;
                     }
@@ -732,9 +776,38 @@ function enemyAttack(){
                         bulletSpawn(a,-1,room.enemys[i].x,room.enemys[i].y);
                         room.enemys[i].aTime = 0;
                     }
+                break;
+                case 3:
+                    vx = [-1, 0];
+                    vy = [room.enemys[i].x - player.x+random(-10,10), room.enemys[i].y - player.y+random(-10,10)];
+                    a = acos((vx[0] * vy[0] + vx[1] * vy[1]) / (betrag(vx) * betrag(vy)));
+                    if (player.y < room.enemys[i].y) {
+                        a = -a;
+                    }
+                    room.enemys[i].rot = a;
+                    room.enemys[i].aTime++;
+                    if(room.enemys[i].aTime > room.enemys[i].aSpeed){
+                        bulletX = room.enemys[i].x+15*cos(room.enemys[i].rot-1.2);
+                        bulletY = room.enemys[i].y+15*sin(room.enemys[i].rot-1.2);
+                        room.enemys[i].animation = 3;
+                        bulletSpawn(a,-2,bulletX,bulletY);
+                        bulletSpawn(a+0.2,-2,bulletX,bulletY);
+                        bulletSpawn(a-0.2,-2,bulletX,bulletY);
+                        room.enemys[i].aTime = rndInt(8);
+                    }
                 break;    
             }
         }
+    }
+}
+function enemyAnimation(enemy){
+    if(enemy.spawnTime<= 0){
+      enemy.skin = 0;
+    }
+    if(enemy.type === 3){
+      if(enemy.aTime < 7 || enemy.aTime >= enemy.aSpeed){
+        enemy.skin = 3;
+      }
     }
 }
 function enemyDraw(){
@@ -751,8 +824,7 @@ function enemyDraw(){
   }  
   for(let i in room.enemys){
     push();
-    if(room.enemys[i].spawnTime <= 0)
-        room.enemys[i].skin = 0;  
+    enemyAnimation(room.enemys[i]);
     imageMode(CENTER); 
     translate(room.enemys[i].x,room.enemys[i].y);
     rotate(room.enemys[i].rot);
@@ -775,9 +847,31 @@ function drawLifebar(){
     push();
     for(let i in room.enemys){
         if(room.enemys[i].hp > 0){
-         noStroke();
-         fill("green");
-         rect(room.enemys[i].x - room.enemys[i].hp/2,room.enemys[i].y+ room.enemys[i].size + 1,room.enemys[i].hp,3);
+          let n = 0;
+          let l = room.enemys[i].hp;
+          while(l > 100){
+            l =l- 100;
+            n++;
+          }
+          switch(n){
+            case 0:
+              fill("green");
+            break;
+            case 1:
+              fill(0, 255, 225);
+            break;
+            case 2:
+              fill(34, 0, 255);
+            break;
+            case 3:
+              fill(255, 0, 225);
+            break;
+            default:
+              fill(0);
+            break;
+          }
+            noStroke();
+            rect(room.enemys[i].x - l/2,room.enemys[i].y+ room.enemys[i].size + 1,l,3);
         }
     }
     pop();
@@ -819,7 +913,7 @@ function roomSet(rTyp) {
       break;
     case 0:
         room.rEnemyCount= 5;
-        room.rEnemyType= [0];
+        room.rEnemyType= [0,0,0,0,0,0,0,0,3];
         if(rndOutcome(20))
           room.rItemCount= 1;
         room.rItemType = [-1];
