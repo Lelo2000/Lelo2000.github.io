@@ -255,11 +255,15 @@ function playerAttack() {
   }
     if(player.skills[player.aModus].type === 0){
         bulletSpawn(bulletA,0,bulletX,bulletY);
-    }
+        soundFireball.setVolume(0.1);
+        soundFireball.play();
+      }
     if(player.skills[player.aModus].type === 1){
         bulletSpawn(bulletA,1,bulletX,bulletY,5);
         bulletSpawn(bulletA+0.15,1,bulletX,bulletY);
         bulletSpawn(bulletA-0.15,1,bulletX,bulletY);
+        soundTrippelFireball.setVolume(0.1);
+        soundTrippelFireball.play();
     }
     if(player.skills[player.aModus].type === 2){
       bulletSpawn(random(2*PI),1,bulletX,bulletY);
@@ -363,7 +367,6 @@ function playerDraw() {
   imageMode(CENTER);
   image(player.img[player.skin],0,0,player.size*1.5,player.size*1.5);
   fill(0,0,0,50);
-  //ellipse(0,0,player.size,player.size);
   pop();
   playerLifebar();
   playerDrawinventory();
@@ -805,8 +808,12 @@ function enemyAnimation(enemy){
       enemy.skin = 0;
     }
     if(enemy.type === 3){
-      if(enemy.aTime < 7 || enemy.aTime >= enemy.aSpeed){
+      if(enemy.aTime < 7 || enemy.aTime >= 15){
         enemy.skin = 3;
+        if(enemy.aTime === 15){
+          soundTrippelFireball.setVolume(0.1);
+          soundTrippelFireball.play();
+        }
       }
     }
 }
