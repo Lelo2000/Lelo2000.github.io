@@ -14,7 +14,10 @@ function preload(){
   startButton = loadImage("Bilder/startButton.svg");
   startButton = loadImage("Bilder/startButton.svg");
   buttonPause = loadImage("Bilder/buttonPause.svg");
-  buttonWeiter = loadImage("Bilder/buttonWeiter.svg");
+  buttonWeiter = loadImage("Bilder/buttonWeiter.svg");  
+  buttonOptionen = loadImage("Bilder/buttonOptionen.svg");
+  buttonTasten = loadImage("Bilder/buttonTasten.svg");
+  buttonBack = loadImage("Bilder/buttonzurueck.svg");
   mageFire = loadImage("Bilder/mageFire.svg");
   mageFire_shoot1 = loadImage("Bilder/mageFire_shoot1.svg");
   mageFireShield = loadImage("Bilder/mageFireShield.svg");
@@ -46,6 +49,9 @@ function setup() {
   manaItem.loadPixels();
   lifeItem.loadPixels();
   startButton.loadPixels();
+  buttonOptionen.loadPixels();
+  buttonTasten.loadPixels();
+  buttonBack.loadPixels();
   mageFire.loadPixels();
   mageFire_shoot1.loadPixels();
   mageFireShield.loadPixels();

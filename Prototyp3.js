@@ -27,7 +27,9 @@ let skill = {
   cooldown: 0,
   cooldownTimer: 0,
   name: "",
-  img: []
+  img: [],
+  flavorText:"",
+  key: 0
 };
 let enemy = {
   x: 0,
@@ -111,12 +113,19 @@ let bullets = [];
 //Variablen
 let mapSize = 20;
 let drawingMap = true;
+//StandardKeys
+let optionKeys = [49,50,51,52];
+//Auswahl der Keys
+let buttonAction = -1;
+let buttonKeyCode = 0;
+
 let time = 0;
 let inventoryPos =[width/2 + 300,height/2-200];
 let skillbarPos =[width/2 -120,height/2+225];
 // Sagt wenn ein Menu gezeichnet werden muss
-// 0 keins 1 StartMenu
+// 0 keins 1 Startmenue 2 Pausemenue 3 Optionen
 let menueNow = 1;
+let menueHistory = [];
 //GameSetup
 let start = false;
 function draw() {
@@ -166,7 +175,7 @@ function playerSetup() {
     maxHp: 40,
     maxMana: 50,
     manaRegen: 3,
-    mana: 25,
+    mana: 40,
     invincibleTime:0,
     skin: 0,
     size: 60,
@@ -214,18 +223,22 @@ function playerControll() {
     player.hp = player.maxHp;
 }
   //AngriffsAuswahl
-  if (keyIsDown(49) && player.skills.length >= 1) {
-    player.aModus = 0;
-  }
-  if (keyIsDown(50)&& player.skills.length >= 2) {
+  if(player.skills.length >= 1)
+    if (keyIsDown(player.skills[0].key)) {
+      player.aModus = 0;
+    }
+  if(player.skills.length >= 2)
+  if (keyIsDown(player.skills[1].key)) {
     player.aModus = 1;
   }
-  if(keyIsDown(51)&& player.skills.length >= 3){
-    player.aModus = 2;
-  }
-  if(keyIsDown(52)&& player.skills.length >= 4){
-    player.aModus = 3;
-  }
+  if(player.skills.length >= 3)
+    if(keyIsDown(player.skills[2].key)){
+     player.aModus = 2;
+   }
+  if(player.skills.length >= 4)
+   if(keyIsDown(player.skills[3].key)){
+     player.aModus = 3;
+   }
   //Angriff
   if (mouseIsPressed) {
     if(mouseX< width/2+300){
@@ -445,7 +458,7 @@ function bulletSpawn(rot,type,x,y){
       bullet.size = 12;
       bullet.speed = 12;
       bullet.damage = 6;
-      bullet.img = [enemyFireball]
+      bullet.img = [enemyFireball];
       break;
     case -1:
       bullet.size = 5;
@@ -504,7 +517,8 @@ function setSkills(type){
         cooldownTimer: 0,
         name: "Feuerball",
         img: [fireball_skillbar],
-        flavorText:"Ein mächtiger Feuerball der deine Gegner zerschmettert"
+        flavorText:"Ein mächtiger Feuerball der deine Gegner zerschmettert",
+        key: 0
       };
       break;
     case 1:
@@ -516,7 +530,8 @@ function setSkills(type){
         cooldownTimer: 0,
         name: "Dreifacher Feuerball",
         img: [trippelFireball_skillbar],
-        flavorText: "Drei kleinere Feuerbälle, um mehrere Gegner gleichzeitig zu besiegen"
+        flavorText: "Drei kleinere Feuerbälle, um mehrere Gegner gleichzeitig zu besiegen",
+        key: 0
       };
       break;
     case 2:
@@ -528,7 +543,8 @@ function setSkills(type){
         cooldownTimer: 0,
         name: "Feuer Hölle",
         img: [firehell_skillbar],
-        flavorText: "Verschieße unkontrolliebar viele Feuerbälle"
+        flavorText: "Verschieße unkontrolliebar viele Feuerbälle",
+        key: 0
       };
       break;
       case 3:
@@ -540,17 +556,19 @@ function setSkills(type){
         cooldownTimer: 0,
         name: "Magisches Schild",
         img: [firehell_skillbar],
-        flavorText: "Schützte dich mit einem Magischen Schild, der Angriffe abwehrt."
+        flavorText: "Schützte dich mit einem Magischen Schild, der Angriffe abwehrt.",
+        key: 0
       };
       break;
   }
+  skill.key = optionKeys[player.skills.length];
   player.skills.push(skill);
 }
 function playerDrawSkillbar(){
   for(let i= 0 ;i<player.skills.length; i++){
     image(player.skills[i].img[0],skillbarPos[0]+(i*60),skillbarPos[1],50,50);
     fill(0);
-    text(i+1,skillbarPos[0]+23+(i*60),skillbarPos[1]+53,50,50);
+    text(String.fromCharCode(player.skills[i].key),skillbarPos[0]+23+(i*60),skillbarPos[1]+53,50,50);
     push();
     fill(0,0,0,100);
     noStroke();
@@ -1157,6 +1175,169 @@ function mapGeneration() {
       }
   }
 }
+
+//Menues
+function menueDraw(){
+  if(menueNow === 2){
+    roomDraw();
+    if(drawingMap=== true)
+    mapDraw();
+    drawDoors();
+    enemyDraw();
+    itemDraw(); 
+    playerDraw();
+    bulletDraw();
+  }
+  switch(menueNow){
+    case 2:
+      push();
+      noStroke();
+      fill(50,50,50,30);
+      rect(0,0,width,height);
+      pop();
+    break;  
+  }
+  drawButtons();
+  if(menueNow === 3){
+    push();
+    for(let i = 0; i< player.skills.length; i++){
+      textAlign(CENTER);
+      if(i === buttonAction){
+        push();
+        noFill();
+        rect(width/2+140,height/2+50*i-204,20,20);
+        pop();
+      }
+      text(player.skills[i].name,0,height/2+50*i-200,width,height);
+      text(String.fromCharCode(player.skills[i].key),width/2+150,height/2+50*i-190);
+    }
+    pop();
+    if(buttonAction != -1){
+      if(keyCode != buttonKeyCode){
+        if(isKeyCodeFree(keyCode)){
+          if(keyCode >= 97 && keyCode <= 122)
+          keyCode = keyCode -32;
+        player.skills[buttonAction].key = keyCode;
+        console.log(keyCode);
+        buttonAction = -1;
+        }else{
+          text("Diese Taste ist schon belegt",mouseX,mouseY);
+        }
+      }
+    }
+  }
+}
+function onMenueClicked(){
+  for(let i in buttons){
+    if(colPointBox(mouseX,mouseY,buttons[i].x,buttons[i].y,buttons[i].sx,buttons[i].sy)){
+      buttonClicked(buttons[i]);
+      return;
+    }
+  }
+}
+function switchMenue(id){
+  //1:StartMenue, 2: PauseMenue
+  buttons = [];
+  menueNow = id;
+  menueHistory.push(menueNow);
+  switch(id){
+    case 0:
+      setButton(width/2+350,height/2-160,1);
+    break;
+    case 1:
+      setButton(width/2-50,height/2-55,0);
+      setButton(width/2-50,height/2-0,3);
+    break;  
+    case 2:
+      setButton(width/2-50,height/2-55,2);
+      setButton(width/2-50,height/2,3);
+    break; 
+    case 3:
+      for(let i = 0; i < player.skills.length; i++){
+        setButton(width/2+140,height/2+50*i-204,4);
+      }
+      setButton(width/2-140,height/2-204,5);
+    break;      
+  }
+}
+
+function drawButtons(i){
+  push();
+  for(let i in buttons){
+    image(buttons[i].img[0],buttons[i].x ,buttons[i].y,buttons[i].sx,buttons[i].sy);
+  }
+  pop();
+}
+function setButton(x,y,id){
+  button = {
+    x:x,
+    y:y,
+    sx: 0,
+    sy: 0,
+    id: id,
+    img: []
+  };
+  switch(id){
+    // 0: Start,1: Pause,2: weiter 3: Optionen 4: Tasten 5: Zurück
+    case 0:
+      button.sx = 100;
+      button.sy  = 50;
+      button.img = [startButton];
+      break;
+    case 1:
+      button.sx = 70;
+      button.sy  = 25;
+      button.img = [buttonPause];
+      break;
+    case 2:
+      button.sx = 100;
+      button.sy  = 50;
+      button.img = [buttonWeiter];
+    break;
+    case 3:
+      button.sx = 100;
+      button.sy  = 50;
+      button.img = [buttonOptionen];
+    break;
+    case 4:
+      button.sx = 20;
+      button.sy  = 20;
+      button.img = [buttonTasten];
+    break;
+    case 5:
+      button.sx = 70;
+      button.sy  = 30;
+      button.img = [buttonBack];
+    break;
+  }
+  buttons.push(button);
+}
+function buttonClicked(button){
+  //1:Startmenue, 2:Pausemenue 3:Optionen
+  switch(button.id){
+    case 0:
+    switchMenue(0);
+    break;
+    case 1:
+    switchMenue(2);
+    break;
+    case 2:
+    switchMenue(0);
+    break;
+    case 3:
+    switchMenue(3);
+    break;
+    case 4:
+      let i  = (button.y+204-height/2)/50;
+      buttonAction = i;
+      buttonKeyCode = keyCode;
+      break;
+    case 5:
+      switchMenue(menueHistory[menueHistory.length-2]);
+    break;
+  }
+}
+//Allgemeine Funktionen
 function keyPressed() {
   if(keyCode === 77){
     if(drawingMap === false){
@@ -1268,103 +1449,12 @@ function rndOutcome(p){
     return false;
   }
 }
-
-
-//Menues
-function menueDraw(){
-  if(menueNow === 2){
-    roomDraw();
-    if(drawingMap=== true)
-    mapDraw();
-    drawDoors();
-    enemyDraw();
-    itemDraw(); 
-    playerDraw();
-    bulletDraw();
-  }
-  switch(menueNow){
-    case 2:
-      push();
-      noStroke();
-      fill(50,50,50,30);
-      rect(0,0,width,height);
-      pop();
-    break;  
-  }
-  drawButtons();
-}
-function onMenueClicked(){
-  for(let i in buttons){
-    if(colPointBox(mouseX,mouseY,buttons[i].x,buttons[i].y,buttons[i].sx,buttons[i].sy)){
-      buttonClicked(buttons[i].id);
-      return;
+function isKeyCodeFree(code){
+  for(let i in player.skills){
+    if(player.skills[i].key === code){
+      return false;
     }
   }
-}
-function switchMenue(id){
-  //1:StartMenue, 2: PauseMenue
-  buttons = [];
-  menueNow = id;
-  switch(id){
-    case 0:
-      setButton(width/2+350,height/2-260,1);
-    break;
-    case 1:
-      setButton(width/2-50,height/2-25,0);
-    break;  
-    case 2:
-      setButton(width/2-50,height/2-25,2);
-    break;    
-  }
+  return true;
 }
 
-function drawButtons(i){
-  push();
-  for(let i in buttons){
-    image(buttons[i].img[0],buttons[i].x ,buttons[i].y,buttons[i].sx,buttons[i].sy);
-  }
-  pop();
-}
-function setButton(x,y,id){
-  button = {
-    x:x,
-    y:y,
-    sx: 0,
-    sy: 0,
-    id: id,
-    img: []
-  };
-  switch(id){
-    // 0: Start,1: Pause,2: weiter
-    case 0:
-      button.sx = 100;
-      button.sy  = 50;
-      button.img = [startButton];
-      break;
-    case 1:
-      button.sx = 70;
-      button.sy  = 25;
-      button.img = [buttonPause];
-      break;
-    case 2:
-      button.sx = 100;
-      button.sy  = 50;
-      button.img = [buttonWeiter];
-    break;
-  }
-  buttons.push(button);
-}
-function buttonClicked(id){
-  //1:StartMenue, 2PauseMenue
-  switch(id){
-    case 0:
-    switchMenue(0);
-    break;
-    case 1:
-    switchMenue(2);
-    break;
-    case 2:
-    switchMenue(0);
-    break;
-  }
-}
