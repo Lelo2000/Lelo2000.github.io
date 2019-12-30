@@ -3,6 +3,9 @@ let mapSize = 20;
 let drawMap = true;
 let drawHitbox = false;
 let bullets = [];
+let time = 0;
+let inventoryPos =[width/2 + 300,height/2-200];
+let skillbarPos =[width/2 -120,height/2+225];
 
 let Obj = function(){
   this.x = 0;
@@ -38,8 +41,6 @@ Obj.prototype.draw = function(){
 };
 
 let Skill = function(name,type,mana,cooldown,img){
-  this.startX = 0;
-  this.startY = 0;
   this.damage = 0;
   this.mana = mana;
   this.type= type;
@@ -53,19 +54,33 @@ let Skill = function(name,type,mana,cooldown,img){
 };
 Skill.prototype.action = function(){
 };
-let Feuerball = function(x,y){
-  Skill.call(this,"Feuerball",0,5,10,[fireball]);
+let Fireball = function(){
+  Skill.call(this,"Feuerball",0,5,10,[fireball_skillbar]);
   this.damage = 10;
-  this.startX = x;
-  this.startY = y;
   this.flavorText="Ein mächtiger Feuerball der deine Gegner zerschmettert";
 };
-Feuerball.prototype = Object.create(Skill.prototype);
-Feuerball.prototype.action = function(){
-  let a = getAngelBetweenPoint(this.startX,this.startY,mouseX,mouseY);
-  this.rot = a;
-  bullets.push(new Bullet(this.x,this.y,a,1,5,[fireball],10,4));
+Fireball.prototype = Object.create(Skill.prototype);
+Fireball.prototype.action = function(){
+  bulletX = player.x+35*cos(player.rot-0.89);
+  bulletY = player.y+35*sin(player.rot-0.89);
+  let a = getAngelBetweenPoint(bulletX,bulletY,mouseX,mouseY);
+  bullets.push(new Bullet(bulletX,bulletY,a,1,5,[fireball],10,4));
 };
+TripleFireball = function(){
+  Skill.call(this,"Dreifach Feuerball",1,10,15,[trippelFireball_skillbar]);
+  this.damage = 10;
+  this.flavorText = "Drei kleinere Feuerbälle, um mehrere Gegner gleichzeitig zu besiegen";
+}
+TripleFireball.prototype = Object.create(Skill.prototype);
+TripleFireball.prototype.action = function(){
+  bulletX = player.x+35*cos(player.rot-0.89);
+  bulletY = player.y+35*sin(player.rot-0.89);
+  let a = getAngelBetweenPoint(bulletX,bulletY,mouseX,mouseY);
+  bullets.push(new Bullet(bulletX,bulletY,a+0.15,1,5,[fireball],10,4));
+  bullets.push(new Bullet(bulletX,bulletY,a-0.15,1,5,[fireball],10,4));
+  bullets.push(new Bullet(bulletX,bulletY,a,1,5,[fireball],10,4));
+};
+
 let Door = function(x,y,direction,type){
   Obj.call(this);
   this.x = x;
@@ -261,18 +276,20 @@ let Player = function (){
   this.yMap = 0;
   this.maxMana = 40;
   this.mana = this.maxMana;
-  this.manaRegen = 5;
-  this.manaRegenTime = 3;
+  this.manaRegen = 2;
+  this.manaRegenTime = 15;
   this.invincibleTime = 0;
+  this.skill = 0;
   this.skills = [];
+  this.keyList = [49,50,51,52];
 };
 Player.prototype = Object.create(LivingObject.prototype);
 Player.prototype.controll = function (){
-  // for(let i in this.skills){
-  //   if(this.skills[i].cooldownTimer < this.skills[i].cooldown){
-  //     this.skills[i].cooldownTimer++;
-  //   }
-  // }
+   for(let i in this.skills){
+     if(this.skills[i].cooldownTimer > 0){
+       this.skills[i].cooldownTimer--;
+    }
+  }
   //Bewegung
   //w
   if (keyIsDown(87) && inRoom(this.x,this.y-this.sizeY/2)) {
@@ -291,44 +308,43 @@ Player.prototype.controll = function (){
     this.move(0);
   }
   //Mana
-  // if(time % 20 === 0 && player.mana < player.maxMana){
-  //     player.mana = player.mana + player.manaRegen;
-  // }
-  // if(player.mana> player.maxMana){
-  //     player.mana = player.maxMana;
-  // }
-  // if(player.hp> player.maxHp){
-  //   player.hp = player.maxHp;
-  // }
+  if(time % this.manaRegenTime === 0 && player.mana < player.maxMana){   
+    player.mana = player.mana + player.manaRegen;
+  }
+ if(this.mana> this.maxMana){
+    this.mana = this.maxMana;
+  }
+  if(this.hp> this.maxHp){
+    this.hp = this.maxHp;
+  }
   //AngriffsAuswahl
-  // if(player.skills.length >= 1)
-  //   if (keyIsDown(player.skills[0].key)) {
-  //     player.aModus = 0;
-  //   }
-  // if(player.skills.length >= 2)
-  // if (keyIsDown(player.skills[1].key)) {
-  //   player.aModus = 1;
-  // }
-  // if(player.skills.length >= 3)
-  //   if(keyIsDown(player.skills[2].key)){
-  //    player.aModus = 2;
-  //  }
-  // if(player.skills.length >= 4)
-  //  if(keyIsDown(player.skills[3].key)){
-  //    player.aModus = 3;
-  //  }
+  if(this.skills.length >= 1)
+    if (keyIsDown(this.skills[0].key)) {
+      this.skill= 0;
+    }
+  if(this.skills.length >= 2)
+  if (keyIsDown(this.skills[1].key)) {
+    this.skill = 1;
+  }
+  if(this.skills.length >= 3)
+    if(keyIsDown(this.skills[2].key)){
+     this.skill = 2;
+   }
+  if(this.skills.length >= 4)
+   if(keyIsDown(this.skills[3].key)){
+     this.skill = 3;
+   }
   // //Angriff
   if (mouseIsPressed) {
      if(mouseX< width/2+300){
       let a = getAngelBetweenPoint(this.x,this.y,mouseX,mouseY);
          this.rot = a;
-         bullets.push(new Bullet(this.x,this.y,a,1,5,[fireball],10,4));
-  //     player.animation = 1;
-  //     if(player.skills[player.aModus].cooldownTimer >= player.skills[player.aModus].cooldown && player.mana > player.skills[player.aModus].mana && player.invincibleTime <= 0){
-  //       playerAttack();
-  //       player.skills[player.aModus].cooldownTimer = 0;
-  //     }
-     }
+         if(this.skills[this.skill].cooldownTimer <= 0 && this.mana >this.skills[this.skill].mana){
+          this.skills[this.skill].action();
+          this.mana  = this.mana -this.skills[this.skill].mana
+          this.skills[this.skill].cooldownTimer = this.skills[this.skill].cooldown;
+         }
+      }
   }
 } ;
 Player.prototype.collision = function(){
@@ -356,7 +372,52 @@ Player.prototype.collision = function(){
     }
   }
 }
-
+Player.prototype.setSkill = function(skill){
+  skill.key = this.keyList[this.skills.length];
+  this.skills.push(skill);
+}
+Player.prototype.drawSkillbar = function(){
+    for(let i= 0 ;i<this.skills.length; i++){
+      image(this.skills[i].img[0],skillbarPos[0]+(i*60),skillbarPos[1],50,50);
+      fill(0);
+      text(String.fromCharCode(this.skills[i].key),skillbarPos[0]+23+(i*60),skillbarPos[1]+53,50,50);
+      push();
+      fill(0,0,0,100);
+      noStroke();
+      let rectHoehe = (this.skills[i].cooldownTimer) * (50 / this.skills[i].cooldown);
+      rect(skillbarPos[0]+(i*60),skillbarPos[1]+50,50,-rectHoehe);
+      pop();
+      if(i === this.skill){
+        push();
+        stroke(0);
+        strokeWeight(4);
+        noFill();
+        rect(skillbarPos[0]+(i*60),skillbarPos[1],50,50);
+        pop();
+      }
+  }
+}
+Player.prototype.drawStats = function(){
+    push();
+    noStroke();
+    fill("red");
+    rect(width/2-234,height/2 - 254,this.maxHp*2,10);
+    if(this.hp > 0){
+      fill("green");
+      rect(width/2-234,height/2 - 254,this.hp*2,10);
+    }
+    fill(0,0,100);
+    rect(width/2-234,height/2 - 234,this.maxMana*2,10);
+    if(this.mana > 0){
+      fill(50,50,255);
+      rect(width/2-234,height/2 - 234,this.mana*2,10);
+    }
+    pop();
+}
+Player.prototype.drawHud = function(){
+  this.drawSkillbar();
+  this.drawStats();
+}
 let Bullet = function(x,y,a,type,maxHp,img,size,speed){
   LivingObject.call(this, maxHp);
   this.x = x;
@@ -448,6 +509,8 @@ let room = {};
 function draw(){
   if(start){
     player = new Player();
+    player.setSkill(new Fireball());
+    player.setSkill(new TripleFireball());
     mapGeneration();
     roomChange(-1);
     start = false;
@@ -456,9 +519,11 @@ function draw(){
   mapDraw();
   room.draw();
   player.draw();
+  player.drawHud();
   playerManager();
   enemyManager();
   bulletHandler();
+  time++;
 }
 function bulletHandler(){
   for(let i  in bullets){
