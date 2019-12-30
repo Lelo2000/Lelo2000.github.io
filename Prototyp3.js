@@ -99,14 +99,14 @@ let ersteller = {
   y: 10
 };
 let buttons = [];
-  let button = {
+let button = {
     x:0,
     y:0,
     sx: 0,
     sy: 0,
     id: 0,
     img: []
-  };
+};
 //Arrays
 let map = [];
 let bullets = [];
