@@ -1,6 +1,8 @@
 let map = [];
 let mapSize = 20;
 let drawMap = true;
+let drawHitbox = false;
+
 
 let Obj = function(){
   this.x = 0;
@@ -18,9 +20,24 @@ Obj.prototype.draw = function(){
   translate(this.x,this.y);
   rotate(this.rot);
   imageMode(CENTER);
-  image(this.img[this.skin],0,0,this.sizeX,this.sizeY);
+  if(this.shape === 0)
+    image(this.img[this.skin],0,0,this.sizeX,this.sizeX);
+  if(this.shape === 1)
+    image(this.img[this.skin],0,0,this.sizeX,this.sizeY);
+  
+    if(drawHitbox){
+    circle(0,0,4);
+    rectMode(CENTER);
+    noFill();
+    if(this.shape === 1)
+      rect(0,0,this.sizeX,this.sizeY);
+    if(this.shape === 0)
+      ellipse(0,0,this.sizeX,this.sizeY);
+  }  
   pop();
 };
+
+
 let Door = function(x,y,direction,type){
   Obj.call(this);
   this.x = x;
@@ -29,11 +46,19 @@ let Door = function(x,y,direction,type){
   this.img = [doorClosed,doorOpen];
   this.sizeX = 40;
   this.sizeY = 40;
+  this.shape = 1;
 
   this.direction = direction;
   this.isOpen = false;
 };
 Door.prototype = Object.create(Obj.prototype);
+Door.prototype.open = function (bool){
+  this.isOpen = bool;
+  if(bool)
+    this.skin = 1;
+};
+
+
 let Room = function(x,y,type){
   Obj.call(this);
   this.x = x;
@@ -88,10 +113,14 @@ Room.prototype = Object.create(Obj.prototype);
 Room.prototype.generation = function (){
     if(this.doors.length === 0)
       this.setDoors();
-    // while(this.enemys.length + this.deadEnemys.length < this.enemyCount ){
-    //   enemySpawn();  
-    //   this.enemys.push(enemy);
-    // }
+    while(this.enemys.length + this.deadEnemys.length < this.enemyCount ){
+      let enType = random(this.enemyType);
+      let en = new Enemy(0,0,enType);
+      let pos = this.rndPositionInRoom(en.sizeX); 
+      en.x = pos[0];
+      en.y = pos[1];
+      this.enemys.push(en);  
+    }
     // if(this.isVisited === false){
     //   while(this.items.length < this.itemCount){
     //       itemSpawn(this.itemType,0,0);
@@ -107,39 +136,44 @@ Room.prototype.setDoors = function(){
     let i = getInPointArray(player.xMap, player.yMap - 1, map);
     if( i>=0){
       if(map[i].type === -2){
-        this.doors.push(new Door(width/2-20,height/2-this.sizeY/2+20,3,0));
+        this.doors.push(new Door(width/2,height/2-this.sizeY/2+20,3,0));
       }else{
-        this.doors.push(new Door(width/2-20,height/2-this.sizeY/2+20,3,0));
+        this.doors.push(new Door(width/2,height/2-this.sizeY/2+20,3,0));
       }
       console.log("Türen oben esetzt");
     }
     i = getInPointArray(player.xMap - 1, player.yMap, map);
     if ( i>=0) {
       if(map[i].rTyp === -2){
-        this.doors.push(new Door(width/2-this.sizeX/2,height/2-20,2,0));  
+        this.doors.push(new Door(width/2-this.sizeX/2 +20,height/2,2,0));  
       }else{
-        this.doors.push(new Door(width/2-this.sizeX/2,height/2-20,2,0));  
+        this.doors.push(new Door(width/2-this.sizeX/2 +20,height/2,2,0));  
       }  
     }
     //console.log("Türen links esetzt");
     i= getInPointArray(player.xMap, player.yMap + 1, map);
     if (i >=0) {
       if(map[i].rTyp === -2){
-        this.doors.push(new Door(width/2-20,height/2+this.sizeY/2-20,1,0));
+        this.doors.push(new Door(width/2,height/2+this.sizeY/2-20,1,0));
       }else{
-        this.doors.push(new Door(width/2-20,height/2+this.sizeY/2-20,1,0));
+        this.doors.push(new Door(width/2,height/2+this.sizeY/2-20,1,0));
       }
     }
     //console.log("Türen unten esetzt");
     i = getInPointArray(player.xMap + 1, player.yMap, map);
     if (i >= 0) {
       if(map[i].rTyp === -2){
-        this.doors.push(new Door(width/2+this.sizeX/2-20,height/2-20,0,0));
+        this.doors.push(new Door(width/2+this.sizeX/2-20,height/2,0,0));
       }else{
-        this.doors.push(new Door(width/2+this.sizeX/2-20,height/2-20,0,0));
+        this.doors.push(new Door(width/2+this.sizeX/2-20,height/2,0,0));
       }
     }
 };
+Room.prototype.openDoors = function(bool){
+  for(let i in this.doors){
+    this.doors[i].open(bool);
+  }
+}
 Room.prototype.draw = function (){
   push();
   fill(255);
@@ -155,11 +189,30 @@ Room.prototype.draw = function (){
   }
   pop();
 };
-let LivingObject= function(speed,maxHp) {
+Room.prototype.rndPositionInRoom = function(size){
+    let x = 0;
+    let y = 0;
+    if(this.shape === 0){
+       x = round(random(width/2 -this.sizeX/2 + size, width/2 + this.sizeX/2 - size));
+       y = round(random(height/2 -this.sizeY/2 + size, height/2 + this.sizeY/2 - size));
+    }
+    //https://stackoverflow.com/questions/5837572/generate-a-random-point-within-a-circle-uniformly/50746409#50746409
+    if(this.shape === 1){  
+      let R = random(this.sizeX/2-size); 
+      let r = R * sqrt(random(0,1));
+      let theta = random() * 2 * PI;
+      x = width/2 + r * cos(theta);
+      y = height/2 + r * sin(theta);
+    }
+    return [x,y];
+}
+
+
+let LivingObject= function() {
   Obj.call(this);
-  this.speed= speed;
-  this.maxHp = maxHp;
-  this.hp = maxHp;
+  this.speed= 0;
+  this.maxHp = 0;
+  this.hp = this.maxHp;
   this.isAlive = true;
   this.animation = 0;
 };
@@ -168,10 +221,14 @@ LivingObject.prototype.move = function(rot){
   this.x = this.x + cos(rot) * this.speed;
   this.y = this.y + sin(rot) * this.speed;
 };
+
+
 let Player = function (){
-  LivingObject.call(this,7,40);
+  LivingObject.call(this);
   this.sizeX = 60;
   this.sizeY = 60;
+  this.maxHp = 40;
+  this.speed = 7;
   this.img = [mageFire, mageFire_shoot1,mageFireShield];
 
   this.xMap = 0;
@@ -252,9 +309,104 @@ Player.prototype.controll = function (){
   //   }
   // }
 } ;
+Player.prototype.collision = function(){
+  for(let i in room.doors){
+    if(colPointObj(player.x,player.y,room.doors[i]) && room.doors[i].isOpen === true){
+      switch(room.doors[i].direction){
+        case 0:
+          player.xMap += 1;
+          roomChange(0);
+        break;
+        case 1:
+          player.yMap += 1;
+          roomChange(1);
+        break;
+        case 2:
+          player.xMap -= 1;
+          roomChange(2);
+        break;
+        case 3:
+          player.yMap -= 1;
+          roomChange(3);
+        break;  
+      } 
+      return;     
+    }
+  }
+}
 
-
-
+let Enemy = function(x,y,type){
+  LivingObject.call(this);
+  this.x = x;
+  this.y = y;
+  this.type = type;
+  this.aTime = 0;
+  this.aSpeed = 0;
+  this.aModus = 0;
+  this.spawnTime = 0;
+  this.bodyDamage = 0;
+  switch(type){
+    case 0:
+      this.speed= 3;
+      this.sizeX= 18;
+      this.maxHp= 15;
+      this.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
+    break;
+    case 1:
+      this.speed= 2;
+      this.sizeX= 40;
+      this.maxHp= 60;
+      this.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
+    break;
+    case 2:
+      this.speed= 2;
+      this.sizeX= 30;
+      this.maxHpX= 60;
+      this.aSpeed = 20;
+      this.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
+    break;
+    case 3:
+      this.speed= 0;
+      this.sizeX= 50;
+      this.maxHp= 350;
+      this.aSpeed = 25;
+      this.img = [enemyFireMage,enemyFireMageDead,enemyFireMage,enemyFireMageAttack];
+    break;
+  }
+  this.hp = this.maxHp;
+}
+Enemy.prototype = Object.create(LivingObject.prototype);
+Enemy.prototype.drawLifebar = function (){
+  push();
+  if(this.hp > 0){
+    let n = 0;
+    let l = this.hp;
+    while(l > 100){
+          l =l- 100;
+          n++;
+        }
+        switch(n){
+          case 0:
+            fill("green");
+          break;
+          case 1:
+            fill(0, 255, 225);
+          break;
+          case 2:
+            fill(34, 0, 255);
+          break;
+          case 3:
+            fill(255, 0, 225);
+          break;
+          default:
+            fill(0);
+          break;
+        }
+          noStroke();
+          rect(this.x - l/2,this.y+ (this.sizeX/2) + 1,l,3);
+  }
+  pop();
+}
 let start = true;
 let player = {};
 let room = {};
@@ -269,9 +421,20 @@ function draw(){
   mapDraw();
   room.draw();
   player.draw();
-  player.controll();
+  playerManager();
+  enemyManager();
 }
+function playerManager(){
+  player.controll();
+  player.collision();
+}
+function enemyManager(){
+  for(let i in room.enemys){
+    room.enemys[i].draw();
+    room.enemys[i].drawLifebar();
 
+  }
+}
 function roomChange(direc){
   //bullets= [];
   //raum wird Geändert
@@ -299,15 +462,21 @@ function roomChange(direc){
     player.x = room.startPoint[0];
     player.y = room.startPoint[1];
   }
-  // if(enemyCountAlive() <= 0){
-  //   openDoors(true);
-  // }else{
-  //   openDoors(false);
-  // }
+  if(room.enemys.length <= 0){
+      room.openDoors(true);
+    }else{
+      room.openDoors(false);
+    }
   room.isVisited = true;
   //console.log("Raum Geändert");
 }
-
+function searchDoor(direc){
+  for(let i in room.doors){
+    if(room.doors[i].direction === direc){
+      return room.doors[i];
+    }
+  }
+}
 //MAP
 function mapDraw() {
   push();
@@ -406,22 +575,33 @@ function inRoom(x,y){
   }
   return true;
 }
-
-
-function rndPositionInRoom(size){
-  let x = 0;
-  let y = 0;
-  if(this.Shape === 0){
-     x = round(random(width/2 -this.SizeX/2 + size, width/2 + this.SizeX/2 - size));
-     y = round(random(height/2 -this.SizeY/2 + size, height/2 + this.SizeY/2 - size));
+function colObjObj (obj1,obj2){
+  let dx = abs(obj1.x - obj2.x);
+  let dy = abs(Obj1.y - obj2.y);
+  if(obj1.shape === 0 && obj2.shape === 0){
+    if(dx < (obj1.sizeX/2+obj2.sizeX/2)){
+      return true;
+    }
+    return false();
   }
-  //https://stackoverflow.com/questions/5837572/generate-a-random-point-within-a-circle-uniformly/50746409#50746409
-  if(this.Shape === 1){  
-    let R = random(this.SizeX/2-size); 
-    let r = R * sqrt(random(0,1));
-    let theta = random() * 2 * PI;
-    x = width/2 + r * cos(theta);
-    y = height/2 + r * sin(theta);
-  }
-  return [x,y];
 }
+function betrag(vektor) {
+  return sqrt(sq(vektor[0]) + sq(vektor[1]));
+}
+function colPointObj(x,y,obj){
+  if(obj.shape ===1){
+    ox = obj.x -obj.sizeX/2;
+    oy = obj.y -obj.sizeY/2;
+    if(x > ox && x < ox + obj.sizeX && y >oy && y<oy + obj.sizeY){
+      return true;
+    }
+      return false;
+  }
+}
+function colPointBox(x,y,bx,by,bsx,bsy){
+  if(x > bx && x < bx + bsx && y >by && y<by + bsy){
+    return true;
+  }
+  return false;
+}
+
