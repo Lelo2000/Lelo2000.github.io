@@ -258,6 +258,7 @@ let LivingObject= function(maxHp) {
   this.hp = this.maxHp;
   this.isAlive = true;
   this.animation = 0;
+  this.animationTimer = 0;
 };
 LivingObject.prototype = Object.create(Obj.prototype);
 LivingObject.prototype.move = function(rot){
@@ -340,13 +341,15 @@ Player.prototype.controll = function (){
       let a = getAngelBetweenPoint(this.x,this.y,mouseX,mouseY);
          this.rot = a;
          if(this.skills[this.skill].cooldownTimer <= 0 && this.mana >this.skills[this.skill].mana){
+          player.animation = 1;
+          player.animationTimer = 15;
           this.skills[this.skill].action();
           this.mana  = this.mana -this.skills[this.skill].mana
           this.skills[this.skill].cooldownTimer = this.skills[this.skill].cooldown;
          }
       }
   }
-} ;
+};
 Player.prototype.collision = function(){
   for(let i in room.doors){
     if(colPointObj(player.x,player.y,room.doors[i]) && room.doors[i].isOpen === true){
@@ -371,11 +374,11 @@ Player.prototype.collision = function(){
       return;     
     }
   }
-}
+};
 Player.prototype.setSkill = function(skill){
   skill.key = this.keyList[this.skills.length];
   this.skills.push(skill);
-}
+};
 Player.prototype.drawSkillbar = function(){
     for(let i= 0 ;i<this.skills.length; i++){
       image(this.skills[i].img[0],skillbarPos[0]+(i*60),skillbarPos[1],50,50);
@@ -396,7 +399,7 @@ Player.prototype.drawSkillbar = function(){
         pop();
       }
   }
-}
+};
 Player.prototype.drawStats = function(){
     push();
     noStroke();
@@ -413,11 +416,25 @@ Player.prototype.drawStats = function(){
       rect(width/2-234,height/2 - 234,this.mana*2,10);
     }
     pop();
-}
+};
 Player.prototype.drawHud = function(){
   this.drawSkillbar();
   this.drawStats();
-}
+};
+Player.prototype.animations = function(){
+  if(this.animationTimer> 0){
+    this.animationTimer--;  
+    if(this.animation === 1){
+      this.skin = 1;
+    }
+    if(this.invincibleTime > 0){
+      this.skin = 2;
+    }
+  }else{
+    this.skin = 0;
+  }
+};
+
 let Bullet = function(x,y,a,type,maxHp,img,size,speed){
   LivingObject.call(this, maxHp);
   this.x = x;
@@ -479,6 +496,7 @@ Enemy.prototype.action = function(){};
 Enemy.prototype.movingToPlayer = function(){
   this.move(getAngelBetweenPoint(this.x,this.y,player.x,player.y));
 };
+
 let Slime = function(x,y){
   Enemy.call(this,40,0);
   this.x = x;
@@ -518,9 +536,10 @@ function draw(){
   clear();
   mapDraw();
   room.draw();
+  playerManager();
+  player.animations();
   player.draw();
   player.drawHud();
-  playerManager();
   enemyManager();
   bulletHandler();
   time++;
