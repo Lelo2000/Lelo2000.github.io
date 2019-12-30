@@ -66,7 +66,7 @@ Fireball.prototype.action = function(){
   let a = getAngelBetweenPoint(bulletX,bulletY,mouseX,mouseY);
   bullets.push(new Bullet(bulletX,bulletY,a,1,5,[fireball],10,4));
 };
-TripleFireball = function(){
+let TripleFireball = function(){
   Skill.call(this,"Dreifach Feuerball",1,10,15,[trippelFireball_skillbar]);
   this.damage = 10;
   this.flavorText = "Drei kleinere Feuerbälle, um mehrere Gegner gleichzeitig zu besiegen";
@@ -81,6 +81,15 @@ TripleFireball.prototype.action = function(){
   bullets.push(new Bullet(bulletX,bulletY,a,1,5,[fireball],10,4));
 };
 
+let MageShield = function(){
+  Skill.call(this,"Magisches Schild",2,2,0,[fireball_skillbar]);
+  this.flavorText= "Schützte dich mit einem Magischen Schild, der Angriffe abwehrt.",
+  this.isInstant = true;
+}
+MageShield.prototype = Object.create(Skill.prototype);
+MageShield.prototype.action = function(){
+  player.invincibleTime = 2;
+}
 let Door = function(x,y,direction,type){
   Obj.call(this);
   this.x = x;
@@ -271,7 +280,7 @@ let Player = function (){
   this.sizeX = 60;
   this.sizeY = 60;
   this.speed = 7;
-  this.img = [mageFire, mageFire_shoot1,mageFireShield];
+  this.img = [mageFire, mageFire_shoot1];
 
   this.xMap = 0;
   this.yMap = 0;
@@ -279,7 +288,7 @@ let Player = function (){
   this.mana = this.maxMana;
   this.manaRegen = 2;
   this.manaRegenTime = 15;
-  this.invincibleTime = 0;
+  this.invincibleTime = 100;
   this.skill = 0;
   this.skills = [];
   this.keyList = [49,50,51,52];
@@ -319,22 +328,35 @@ Player.prototype.controll = function (){
     this.hp = this.maxHp;
   }
   //AngriffsAuswahl
-  if(this.skills.length >= 1)
-    if (keyIsDown(this.skills[0].key)) {
-      this.skill= 0;
+  // if(this.skills.length >= 1)
+  //   if (keyIsDown(this.skills[0].key)) {
+  //     this.skill= 0;
+  //   }
+  // if(this.skills.length >= 2)
+  // if (keyIsDown(this.skills[1].key)) {
+  //   this.skill = 1;
+  // }
+  // if(this.skills.length >= 3)
+  //   if(keyIsDown(this.skills[2].key)){
+  //    this.skill = 2;
+  //  }
+  // if(this.skills.length >= 4)
+  //  if(keyIsDown(this.skills[3].key)){
+  //    this.skill = 3;
+  //  }
+  for(let i = 0; i< this.skills.length; i++){
+    if(keyIsDown(this.skills[i].key)){
+      console.log(this.skills[i]);
+      if(this.skills[i].isInstant){
+        if(this.mana> this.skills[i].mana){
+         this.skills[i].action();
+         this.mana = this.mana - this.skills[i].mana;
+        }
+      }else{
+        this.skill = i;
+      }
     }
-  if(this.skills.length >= 2)
-  if (keyIsDown(this.skills[1].key)) {
-    this.skill = 1;
   }
-  if(this.skills.length >= 3)
-    if(keyIsDown(this.skills[2].key)){
-     this.skill = 2;
-   }
-  if(this.skills.length >= 4)
-   if(keyIsDown(this.skills[3].key)){
-     this.skill = 3;
-   }
   // //Angriff
   if (mouseIsPressed) {
      if(mouseX< width/2+300){
@@ -351,6 +373,8 @@ Player.prototype.controll = function (){
   }
 };
 Player.prototype.collision = function(){
+  if(this.invincibleTime > 0)
+    this.invincibleTime--;
   for(let i in room.doors){
     if(colPointObj(player.x,player.y,room.doors[i]) && room.doors[i].isOpen === true){
       switch(room.doors[i].direction){
@@ -427,11 +451,15 @@ Player.prototype.animations = function(){
     if(this.animation === 1){
       this.skin = 1;
     }
-    if(this.invincibleTime > 0){
-      this.skin = 2;
-    }
   }else{
     this.skin = 0;
+  }
+  if(this.invincibleTime> 0){
+    push();
+    fill(0,0,255,140);
+    noStroke();
+    ellipse(this.x,this.y,this.sizeX,this.sizeX);
+    pop();
   }
 };
 
@@ -529,6 +557,7 @@ function draw(){
     player = new Player();
     player.setSkill(new Fireball());
     player.setSkill(new TripleFireball());
+    player.setSkill(new MageShield());
     mapGeneration();
     roomChange(-1);
     start = false;
