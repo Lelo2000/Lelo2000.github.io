@@ -2,7 +2,7 @@ let map = [];
 let mapSize = 20;
 let drawMap = true;
 let drawHitbox = false;
-
+let bullets = [];
 
 let Obj = function(){
   this.x = 0;
@@ -37,7 +37,35 @@ Obj.prototype.draw = function(){
   pop();
 };
 
-
+let Skill = function(name,type,mana,cooldown,img){
+  this.startX = 0;
+  this.startY = 0;
+  this.damage = 0;
+  this.mana = mana;
+  this.type= type;
+  this.cooldown= cooldown;
+  this.cooldownTimer= 0;
+  this.name= name;
+  this.img= img;
+  this.flavorText="";
+  this.key= 0;
+  this.isInstant = false;
+};
+Skill.prototype.action = function(){
+};
+let Feuerball = function(x,y){
+  Skill.call(this,"Feuerball",0,5,10,[fireball]);
+  this.damage = 10;
+  this.startX = x;
+  this.startY = y;
+  this.flavorText="Ein mächtiger Feuerball der deine Gegner zerschmettert";
+};
+Feuerball.prototype = Object.create(Skill.prototype);
+Feuerball.prototype.action = function(){
+  let a = getAngelBetweenPoint(this.startX,this.startY,mouseX,mouseY);
+  this.rot = a;
+  bullets.push(new Bullet(this.x,this.y,a,1,5,[fireball],10,4));
+};
 let Door = function(x,y,direction,type){
   Obj.call(this);
   this.x = x;
@@ -114,8 +142,8 @@ Room.prototype.generation = function (){
     if(this.doors.length === 0)
       this.setDoors();
     while(this.enemys.length + this.deadEnemys.length < this.enemyCount ){
-      let enType = random(this.enemyType);
-      let en = new Enemy(0,0,enType);
+      //let enType = random(this.enemyType);
+      let en = new fireMage(0,0);
       let pos = this.rndPositionInRoom(en.sizeX); 
       en.x = pos[0];
       en.y = pos[1];
@@ -208,10 +236,10 @@ Room.prototype.rndPositionInRoom = function(size){
 }
 
 
-let LivingObject= function() {
+let LivingObject= function(maxHp) {
   Obj.call(this);
   this.speed= 0;
-  this.maxHp = 0;
+  this.maxHp = maxHp;
   this.hp = this.maxHp;
   this.isAlive = true;
   this.animation = 0;
@@ -222,12 +250,10 @@ LivingObject.prototype.move = function(rot){
   this.y = this.y + sin(rot) * this.speed;
 };
 
-
 let Player = function (){
-  LivingObject.call(this);
+  LivingObject.call(this,40);
   this.sizeX = 60;
   this.sizeY = 60;
-  this.maxHp = 40;
   this.speed = 7;
   this.img = [mageFire, mageFire_shoot1,mageFireShield];
 
@@ -292,22 +318,18 @@ Player.prototype.controll = function (){
   //    player.aModus = 3;
   //  }
   // //Angriff
-  // if (mouseIsPressed) {
-  //   if(mouseX< width/2+300){
-  //     let vx = [1, 0];
-  //     let vy = [mouseX - player.x, mouseY - player.y];
-  //     let a = acos((vx[0] * vy[0] + vx[1] * vy[1]) / (betrag(vx) * betrag(vy)));
-  //     if (mouseY < player.y) {
-  //       a = -a;
-  //     }
-  //     player.rot = a;
+  if (mouseIsPressed) {
+     if(mouseX< width/2+300){
+      let a = getAngelBetweenPoint(this.x,this.y,mouseX,mouseY);
+         this.rot = a;
+         bullets.push(new Bullet(this.x,this.y,a,1,5,[fireball],10,4));
   //     player.animation = 1;
   //     if(player.skills[player.aModus].cooldownTimer >= player.skills[player.aModus].cooldown && player.mana > player.skills[player.aModus].mana && player.invincibleTime <= 0){
   //       playerAttack();
   //       player.skills[player.aModus].cooldownTimer = 0;
   //     }
-  //   }
-  // }
+     }
+  }
 } ;
 Player.prototype.collision = function(){
   for(let i in room.doors){
@@ -335,45 +357,30 @@ Player.prototype.collision = function(){
   }
 }
 
-let Enemy = function(x,y,type){
-  LivingObject.call(this);
+let Bullet = function(x,y,a,type,maxHp,img,size,speed){
+  LivingObject.call(this, maxHp);
   this.x = x;
   this.y = y;
+  this.rot = a;
+  this.type = type;
+  this.img = img;
+  this.sizeX = size*2;
+  this.sizeY = size;
+  this.shape = 1;
+  this.speed = speed;
+}
+Bullet.prototype = Object.create(LivingObject.prototype);
+
+let Enemy = function(maxHp,type){
+  LivingObject.call(this,maxHp);
+  this.x = 0;
+  this.y = 0;
   this.type = type;
   this.aTime = 0;
   this.aSpeed = 0;
   this.aModus = 0;
-  this.spawnTime = 0;
+  this.spawnTime = 20;
   this.bodyDamage = 0;
-  switch(type){
-    case 0:
-      this.speed= 3;
-      this.sizeX= 18;
-      this.maxHp= 15;
-      this.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
-    break;
-    case 1:
-      this.speed= 2;
-      this.sizeX= 40;
-      this.maxHp= 60;
-      this.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
-    break;
-    case 2:
-      this.speed= 2;
-      this.sizeX= 30;
-      this.maxHpX= 60;
-      this.aSpeed = 20;
-      this.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
-    break;
-    case 3:
-      this.speed= 0;
-      this.sizeX= 50;
-      this.maxHp= 350;
-      this.aSpeed = 25;
-      this.img = [enemyFireMage,enemyFireMageDead,enemyFireMage,enemyFireMageAttack];
-    break;
-  }
-  this.hp = this.maxHp;
 }
 Enemy.prototype = Object.create(LivingObject.prototype);
 Enemy.prototype.drawLifebar = function (){
@@ -406,7 +413,35 @@ Enemy.prototype.drawLifebar = function (){
           rect(this.x - l/2,this.y+ (this.sizeX/2) + 1,l,3);
   }
   pop();
+};
+Enemy.prototype.action = function(){};
+Enemy.prototype.movingToPlayer = function(){
+  this.move(getAngelBetweenPoint(this.x,this.y,player.x,player.y));
+};
+let Slime = function(x,y){
+  Enemy.call(this,40,0);
+  this.x = x;
+  this.y = y;
+  this.speed = 6;
+  this.sizeX = 18;
+  this.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
+} 
+Slime.prototype = Object.create(Enemy.prototype);
+Slime.prototype.action= function (){
+  this.movingToPlayer();
 }
+let fireMage = function(x,y){
+  Enemy.call(this,40,1)
+  this.x = x;
+  this.y = y; 
+  this.sizeX = 30;
+  this.aSpeed = 15;
+  this.img = [enemyFireMage,enemyFireMageDead,enemyFireMage,enemyFireMageAttack];
+};
+fireMage.prototype = Object.create(Enemy.prototype);
+
+
+
 let start = true;
 let player = {};
 let room = {};
@@ -423,6 +458,19 @@ function draw(){
   player.draw();
   playerManager();
   enemyManager();
+  bulletHandler();
+}
+function bulletHandler(){
+  for(let i  in bullets){
+    bullets[i].draw();
+    bullets[i].move(bullets[i].rot);
+    if (inRoom(bullets[i].x + bullets[i].sizeX/2, bullets[i].y) === false ||
+    inRoom(bullets[i].x - bullets[i].sizeX/2, bullets[i].y) === false ||
+    inRoom(bullets[i].x, bullets[i].y+ bullets[i].sizeY/2) === false ||
+    inRoom(bullets[i].x, bullets[i].y- bullets[i].sizeY/2) === false ) {
+     bullets.splice(i, 1);
+    }
+  }
 }
 function playerManager(){
   player.controll();
@@ -432,7 +480,7 @@ function enemyManager(){
   for(let i in room.enemys){
     room.enemys[i].draw();
     room.enemys[i].drawLifebar();
-
+    room.enemys[i].action();
   }
 }
 function roomChange(direc){
@@ -604,4 +652,12 @@ function colPointBox(x,y,bx,by,bsx,bsy){
   }
   return false;
 }
-
+function getAngelBetweenPoint(x,y,ax,ay){
+  let vx = [-1, 0];
+  let vy = [x - ax, y - ay];
+  let a = acos((vx[0] * vy[0] + vx[1] * vy[1]) / (betrag(vx) * betrag(vy)));
+  if (ay < y) {
+      a = -a;
+  }
+  return a;
+}
