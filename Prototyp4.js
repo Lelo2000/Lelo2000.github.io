@@ -7,6 +7,60 @@ let time = 0;
 let inventoryPos =[width/2 + 300,height/2-200];
 let skillbarPos =[width/2 -120,height/2+225];
 
+let Skill = function(name,type,mana,cooldown,img){
+  this.damage = 0;
+  this.mana = mana;
+  this.type= type;
+  this.cooldown= cooldown;
+  this.cooldownTimer= 0;
+  this.name= name;
+  this.img= img;
+  this.flavorText="";
+  this.key= 0;
+  this.isInstant = false;
+};
+Skill.prototype.action = function(){
+};
+let Fireball = function(){
+  Skill.call(this,"Feuerball",0,5,10,[fireball_skillbar]);
+  this.damage = 10;
+  this.flavorText="Ein mächtiger Feuerball der deine Gegner zerschmettert";
+};
+Fireball.prototype = Object.create(Skill.prototype);
+Fireball.prototype.action = function(){
+  bulletX = player.x+35*cos(player.rot-0.89);
+  bulletY = player.y+35*sin(player.rot-0.89);
+  let a = getAngelBetweenPoint(bulletX,bulletY,mouseX,mouseY);
+  bullets.push(new Fireballbullet(bulletX,bulletY,a,0,this.damage));
+};
+let TripleFireball = function(){
+  Skill.call(this,"Dreifach Feuerball",1,10,15,[trippelFireball_skillbar]);
+  this.damage = 10;
+  this.flavorText = "Drei kleinere Feuerbälle, um mehrere Gegner gleichzeitig zu besiegen";
+}
+TripleFireball.prototype = Object.create(Skill.prototype);
+TripleFireball.prototype.action = function(){
+  bulletX = player.x+35*cos(player.rot-0.89);
+  bulletY = player.y+35*sin(player.rot-0.89);
+  let a = getAngelBetweenPoint(bulletX,bulletY,mouseX,mouseY);
+  bullets.push(new Fireballbullet(bulletX,bulletY,a,0,this.damage));
+  bullets.push(new Fireballbullet(bulletX,bulletY,a,0,this.damage));
+  bullets.push(new Fireballbullet(bulletX,bulletY,a,0,this.damage));
+};
+
+let MageShield = function(){
+  Skill.call(this,"Magisches Schild",2,1,0,[fireball_skillbar]);
+  this.flavorText= "Schützte dich mit einem Magischen Schild, der Angriffe abwehrt.",
+  this.isInstant = true;
+}
+MageShield.prototype = Object.create(Skill.prototype);
+MageShield.prototype.action = function(){
+  player.invincibleTime = 2;
+}
+
+
+
+
 let Obj = function(){
   this.x = 0;
   this.y = 0;
@@ -39,57 +93,11 @@ Obj.prototype.draw = function(){
   }  
   pop();
 };
+Obj.prototype.action = function (){
+  console.log("Hey ich bin"+this);
+}
 
-let Skill = function(name,type,mana,cooldown,img){
-  this.damage = 0;
-  this.mana = mana;
-  this.type= type;
-  this.cooldown= cooldown;
-  this.cooldownTimer= 0;
-  this.name= name;
-  this.img= img;
-  this.flavorText="";
-  this.key= 0;
-  this.isInstant = false;
-};
-Skill.prototype.action = function(){
-};
-let Fireball = function(){
-  Skill.call(this,"Feuerball",0,5,10,[fireball_skillbar]);
-  this.damage = 10;
-  this.flavorText="Ein mächtiger Feuerball der deine Gegner zerschmettert";
-};
-Fireball.prototype = Object.create(Skill.prototype);
-Fireball.prototype.action = function(){
-  bulletX = player.x+35*cos(player.rot-0.89);
-  bulletY = player.y+35*sin(player.rot-0.89);
-  let a = getAngelBetweenPoint(bulletX,bulletY,mouseX,mouseY);
-  bullets.push(new Bullet(bulletX,bulletY,a,1,5,[fireball],10,4));
-};
-let TripleFireball = function(){
-  Skill.call(this,"Dreifach Feuerball",1,10,15,[trippelFireball_skillbar]);
-  this.damage = 10;
-  this.flavorText = "Drei kleinere Feuerbälle, um mehrere Gegner gleichzeitig zu besiegen";
-}
-TripleFireball.prototype = Object.create(Skill.prototype);
-TripleFireball.prototype.action = function(){
-  bulletX = player.x+35*cos(player.rot-0.89);
-  bulletY = player.y+35*sin(player.rot-0.89);
-  let a = getAngelBetweenPoint(bulletX,bulletY,mouseX,mouseY);
-  bullets.push(new Bullet(bulletX,bulletY,a+0.15,1,5,[fireball],10,4));
-  bullets.push(new Bullet(bulletX,bulletY,a-0.15,1,5,[fireball],10,4));
-  bullets.push(new Bullet(bulletX,bulletY,a,1,5,[fireball],10,4));
-};
 
-let MageShield = function(){
-  Skill.call(this,"Magisches Schild",2,2,0,[fireball_skillbar]);
-  this.flavorText= "Schützte dich mit einem Magischen Schild, der Angriffe abwehrt.",
-  this.isInstant = true;
-}
-MageShield.prototype = Object.create(Skill.prototype);
-MageShield.prototype.action = function(){
-  player.invincibleTime = 2;
-}
 let Door = function(x,y,direction,type){
   Obj.call(this);
   this.x = x;
@@ -113,10 +121,12 @@ Door.prototype.open = function (bool){
 
 let Room = function(x,y,type){
   Obj.call(this);
-  this.x = x;
-  this.y = y;
+  this.x = width/2;
+  this.y = height/2;
   this.type = type;
 
+  this.mapX = x;
+  this.mapY = y;
   this.enemyCount = 0;
   this.enemyType = [];
   this.itemCount = 0;
@@ -132,32 +142,38 @@ let Room = function(x,y,type){
         this.sizeX= 469;
         this.sizeY= 430;
         this.shape= 1;
-        this.itemCount = 1;
+        this.itemCount = 3;
         this.itemType = [-1];
+        this.enemyCount = 1;
+        this.enemyType = [1];
         this.startPoint= [width/2, height/2];
+        this.img = [roomRectangle];
       break;
     case -2:
         this.sizeX= 300;
         this.sizeY= 300;
         this.shape= 1;
+        this.img = [roomRectangle];
       break;
     case 0:
         this.enemyCount= 5;
-        this.enemyType= [0,0,0,0,0,0,0,0,3];
+        this.enemyType= [0,0,0,0,0,0,0,0,1];
         if(rndOutcome(20))
           this.itemCount= 1;
         this.itemType = [-1];
         this.sizeX= 430;
         this.sizeY= 430;
         this.shape= 0;
+        this.img = [roomCircle];
       break;
     case 1:
         this.enemyCount= rndInt(6);
-        this.enemyType= [0,1,2];
+        this.enemyType= [0,1];
         this.itemCount= 0;
         this.sizeX= 500;
         this.sizeY= 360;
         this.shape= 1;
+        this.img = [roomRectangle];
       break;
   }
 };
@@ -166,26 +182,26 @@ Room.prototype.generation = function (){
     if(this.doors.length === 0)
       this.setDoors();
     while(this.enemys.length + this.deadEnemys.length < this.enemyCount ){
-      //let enType = random(this.enemyType);
-      let en = new fireMage(0,0);
+      let enType = random(this.enemyType);
+      let en = getEnemyFromType(enType,0,0);
       let pos = this.rndPositionInRoom(en.sizeX); 
       en.x = pos[0];
       en.y = pos[1];
       this.enemys.push(en);  
     }
-    // if(this.isVisited === false){
-    //   while(this.items.length < this.itemCount){
-    //       itemSpawn(this.itemType,0,0);
-    //       let pos = rndPositionInRoom(item.size); 
-    //       item.x = pos[0];
-    //       item.y= pos[1]; 
-    //       room.items.push(item);
-    //   } 
-    // }
+    if(this.isVisited === false){
+      while(this.items.length < this.itemCount){
+          let item = new HealingPotion(0,0);
+          let pos = this.rndPositionInRoom(item.sizeX);
+          item.x = pos[0];
+          item.y = pos[1];  
+          room.items.push(item);
+      } 
+    }
 };
 Room.prototype.setDoors = function(){
     //console.log("Türen werden gesetzt");
-    let i = getInPointArray(player.xMap, player.yMap - 1, map);
+    let i = getInPointMap(player.xMap, player.yMap - 1);
     if( i>=0){
       if(map[i].type === -2){
         this.doors.push(new Door(width/2,height/2-this.sizeY/2+20,3,0));
@@ -194,7 +210,7 @@ Room.prototype.setDoors = function(){
       }
       console.log("Türen oben esetzt");
     }
-    i = getInPointArray(player.xMap - 1, player.yMap, map);
+    i = getInPointMap(player.xMap - 1, player.yMap);
     if ( i>=0) {
       if(map[i].rTyp === -2){
         this.doors.push(new Door(width/2-this.sizeX/2 +20,height/2,2,0));  
@@ -203,7 +219,7 @@ Room.prototype.setDoors = function(){
       }  
     }
     //console.log("Türen links esetzt");
-    i= getInPointArray(player.xMap, player.yMap + 1, map);
+    i= getInPointMap(player.xMap, player.yMap + 1);
     if (i >=0) {
       if(map[i].rTyp === -2){
         this.doors.push(new Door(width/2,height/2+this.sizeY/2-20,1,0));
@@ -212,7 +228,7 @@ Room.prototype.setDoors = function(){
       }
     }
     //console.log("Türen unten esetzt");
-    i = getInPointArray(player.xMap + 1, player.yMap, map);
+    i = getInPointMap(player.xMap + 1, player.yMap);
     if (i >= 0) {
       if(map[i].rTyp === -2){
         this.doors.push(new Door(width/2+this.sizeX/2-20,height/2,0,0));
@@ -226,30 +242,15 @@ Room.prototype.openDoors = function(bool){
     this.doors[i].open(bool);
   }
 }
-Room.prototype.draw = function (){
-  push();
-  fill(255);
-  let mx = width/2 ;
-  let my = height/2;
-  let rmx = mx - this.sizeX/2;
-  let rmy = my - this.sizeY/2;
-  if(this.shape === 1){
-    rect(rmx,rmy,this.sizeX,this.sizeY);
-  }
-  for(let i in this.doors){
-    this.doors[i].draw();
-  }
-  pop();
-};
 Room.prototype.rndPositionInRoom = function(size){
     let x = 0;
     let y = 0;
-    if(this.shape === 0){
+    if(this.shape === 1){
        x = round(random(width/2 -this.sizeX/2 + size, width/2 + this.sizeX/2 - size));
        y = round(random(height/2 -this.sizeY/2 + size, height/2 + this.sizeY/2 - size));
     }
     //https://stackoverflow.com/questions/5837572/generate-a-random-point-within-a-circle-uniformly/50746409#50746409
-    if(this.shape === 1){  
+    if(this.shape === 0){  
       let R = random(this.sizeX/2-size); 
       let r = R * sqrt(random(0,1));
       let theta = random() * 2 * PI;
@@ -257,6 +258,26 @@ Room.prototype.rndPositionInRoom = function(size){
       y = height/2 + r * sin(theta);
     }
     return [x,y];
+}
+
+let Item = function(x,y,name,type){
+  Obj.call(this);
+  this.x = x;
+  this.y = y;
+  this.type = type;
+  this.instantConsumable = false;
+  this.name = name;
+}
+Item.prototype = Object.create(Obj.prototype);
+
+let HealingPotion = function (x,y){
+  Item.call(this,x,y,"Heiltrank",0);
+  this.sizeX = 30;
+  this.img = [healingPotion];
+}
+HealingPotion.prototype = Object.create(Item.prototype);
+HealingPotion.prototype.action = function(){
+  player.hp = player.hp + 15;
 }
 
 
@@ -288,9 +309,10 @@ let Player = function (){
   this.mana = this.maxMana;
   this.manaRegen = 2;
   this.manaRegenTime = 15;
-  this.invincibleTime = 100;
+  this.invincibleTime = 0;
   this.skill = 0;
   this.skills = [];
+  this.inventory = [];
   this.keyList = [49,50,51,52];
 };
 Player.prototype = Object.create(LivingObject.prototype);
@@ -398,6 +420,30 @@ Player.prototype.collision = function(){
       return;     
     }
   }
+  for(let i in room.items){
+    if(colObjObj(this,room.items[i])){
+      this.inventory.push(room.items[i]);
+      console.log(this.inventory);
+      room.items.splice(i,1);
+    }
+  }
+  for(let i in bullets){
+    if(bullets[i].type < 0){
+      if(colObjObj(this,bullets[i])){
+        if(this.invincibleTime <= 0)
+          this.hp = this.hp - bullets[i].damage;
+        bullets.splice(i,1);
+      }
+    }
+  }
+  if(this.invincibleTime <= 0){
+    for(let i in room.enemys){
+      if(colObjObj(this,room.enemys[i])){
+        this.hp = this.hp-room.enemys[i].bodyDamage;
+        this.invincibleTime = 5;
+      }
+    }
+  }
 };
 Player.prototype.setSkill = function(skill){
   skill.key = this.keyList[this.skills.length];
@@ -441,9 +487,45 @@ Player.prototype.drawStats = function(){
     }
     pop();
 };
+Player.prototype.drawInventory = function(){
+  let ix = 0;
+  let iy = 0;
+  for(let i  in this.inventory){
+      image(this.inventory[i].img[0],inventoryPos[0]+ix*50,inventoryPos[1] +50*iy,50,50);
+      ix++;
+      if(ix >= 5){
+        iy++;
+        ix = 0;
+      }
+  }
+}
+Player.prototype.drawSkillbarHover = function(){
+  for(let i = 0; i < this.skills.length; i++){
+    if(colPointBox(mouseX,mouseY,skillbarPos[0] + (i*60),skillbarPos[1],50,50)){
+      push();
+      fill(0,0,0,140);
+      rect(mouseX,mouseY-120,200,120);
+      noStroke();
+      fill(255);
+      textSize(14);
+      text(this.skills[i].name,mouseX +3,mouseY - 106);
+      fill(255,0,0);
+      text("Damage: " +this.skills[i].damage,mouseX + 3,mouseY - 90);
+      fill(0,0,255);
+      text("Mana: " + this.skills[i].mana,mouseX +85,mouseY - 90);
+      fill(255);
+      textSize(10);
+      textStyle(ITALIC);
+      text(this.skills[i].flavorText,mouseX +3,mouseY - 75,190,120);
+      pop();
+    }
+  }
+}
 Player.prototype.drawHud = function(){
+  this.drawInventory();
   this.drawSkillbar();
   this.drawStats();
+  this.drawSkillbarHover();
 };
 Player.prototype.animations = function(){
   if(this.animationTimer> 0){
@@ -463,7 +545,7 @@ Player.prototype.animations = function(){
   }
 };
 
-let Bullet = function(x,y,a,type,maxHp,img,size,speed){
+let Bullet = function(x,y,a,type,maxHp,img,size,speed,damage){
   LivingObject.call(this, maxHp);
   this.x = x;
   this.y = y;
@@ -474,8 +556,19 @@ let Bullet = function(x,y,a,type,maxHp,img,size,speed){
   this.sizeY = size;
   this.shape = 1;
   this.speed = speed;
+  this.damage = damage;
 }
 Bullet.prototype = Object.create(LivingObject.prototype);
+
+let Fireballbullet = function (x,y,a,type,damage){
+  Bullet.call(this,x,y,a,type,1,[],12,12,damage);
+  if(type === 0){
+    this.img = [fireball];
+  }else{
+    this.img = [enemyFireball];
+  }
+}
+Fireballbullet.prototype = Object.create(Bullet.prototype);
 
 let Enemy = function(maxHp,type){
   LivingObject.call(this,maxHp);
@@ -520,32 +613,102 @@ Enemy.prototype.drawLifebar = function (){
   }
   pop();
 };
-Enemy.prototype.action = function(){};
 Enemy.prototype.movingToPlayer = function(){
-  this.move(getAngelBetweenPoint(this.x,this.y,player.x,player.y));
+  this.rot =getAngelBetweenPoint(this.x,this.y,player.x,player.y); 
+  this.move(this.rot);
 };
+Enemy.prototype.collision = function (){
+  for(let i in bullets){
+    if(bullets[i].type >= 0){
+      if(colObjObj(this,bullets[i])){
+        this.hp = this.hp - bullets[i].damage;
+        bullets.splice(i,1);
+        if(this.hp <= 0){
+          this.dead();
+        }
+        return;
+      }
+    }
+  }
+}
+Enemy.prototype.dead = function(){
+  this.isAlive = false;
+  this.skin = 1;
+  room.deadEnemys.push(this);  
+}
+Enemy.prototype.animations = function(){
+  if(this.animationTimer>0){
+    this.animationTimer--;
+    if(this.animation === 1){
+      this.skin = 3;
+    }
+  }else{
+    this.skin = 0;
+  }
+  if(this.spawnTime > 0){
+    this.skin = 2;
+  }
+}
 
-let Slime = function(x,y){
-  Enemy.call(this,40,0);
+let Slime = function(x,y,bigness){
+  Enemy.call(this,bigness*5,0);
   this.x = x;
   this.y = y;
-  this.speed = 6;
-  this.sizeX = 18;
+  this.speed = 8-bigness;
+  this.sizeX = bigness*8;
+  this.bodyDamage = bigness*2;
+  this.bigness = bigness;
   this.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
 } 
 Slime.prototype = Object.create(Enemy.prototype);
 Slime.prototype.action= function (){
   this.movingToPlayer();
 }
+Slime.prototype.dead = function(){
+  if(this.bigness>2){
+    this.bigness--;
+    room.enemys.push(new Slime(this.x-random(-8,8),this.y-random(-8,8),this.bigness));
+    room.enemys.push(new Slime(this.x-random(-8,8),this.y-random(-8,8),this.bigness));
+  }  
+  this.isAlive = false;
+  this.skin = 1;
+  room.deadEnemys.push(this);  
+}
 let fireMage = function(x,y){
-  Enemy.call(this,40,1)
+  Enemy.call(this,240,1)
   this.x = x;
   this.y = y; 
-  this.sizeX = 30;
+  this.sizeX = 50;
   this.aSpeed = 15;
+  this.bodyDamage = 1;
   this.img = [enemyFireMage,enemyFireMageDead,enemyFireMage,enemyFireMageAttack];
 };
 fireMage.prototype = Object.create(Enemy.prototype);
+fireMage.prototype.action = function(){
+  this.rot = getAngelBetweenPoint(this.x,this.y,player.x,player.y);
+  let bulletX = this.x+17*cos(this.rot-0.95);
+  let bulletY = this.y+17*sin(this.rot-0.95);
+  if(this.aTime <= 6){
+    this.animationTimer = 6;
+    this.animation = 1;
+    push();
+    fill(0,0,0,160);
+    stroke(255,0,0,160)
+    strokeWeight(2);
+    circle(bulletX,bulletY,7-this.aTime);
+    pop();
+  }
+  if(this.aTime <= 0){
+
+  bullets.push(new Fireballbullet(bulletX,bulletY,this.rot+0.35,-1,6));
+  bullets.push(new Fireballbullet(bulletX,bulletY,this.rot-0.35,-1,6));
+  bullets.push(new Fireballbullet(bulletX,bulletY,this.rot,-1,6));
+
+  this.aTime = this.aSpeed;
+  }else{
+    this.aTime--;
+  }
+}
 
 
 
@@ -565,11 +728,17 @@ function draw(){
   clear();
   mapDraw();
   room.draw();
+  for(let i in room.doors){
+    room.doors[i].draw();
+  }
+  for(let j in room.items){
+    room.items[j].draw();
+  }
+  enemyManager();
   playerManager();
   player.animations();
   player.draw();
   player.drawHud();
-  enemyManager();
   bulletHandler();
   time++;
 }
@@ -577,12 +746,15 @@ function bulletHandler(){
   for(let i  in bullets){
     bullets[i].draw();
     bullets[i].move(bullets[i].rot);
+  }
+  for(let i in bullets){
     if (inRoom(bullets[i].x + bullets[i].sizeX/2, bullets[i].y) === false ||
     inRoom(bullets[i].x - bullets[i].sizeX/2, bullets[i].y) === false ||
     inRoom(bullets[i].x, bullets[i].y+ bullets[i].sizeY/2) === false ||
     inRoom(bullets[i].x, bullets[i].y- bullets[i].sizeY/2) === false ) {
-     bullets.splice(i, 1);
-    }
+     
+      bullets.splice(i, 1);
+    }  
   }
 }
 function playerManager(){
@@ -590,17 +762,33 @@ function playerManager(){
   player.collision();
 }
 function enemyManager(){
+  for(let i in room.deadEnemys){
+    room.deadEnemys[i].draw();
+  }
   for(let i in room.enemys){
-    room.enemys[i].draw();
-    room.enemys[i].drawLifebar();
-    room.enemys[i].action();
+    if(room.enemys[i].isAlive === true){
+     room.enemys[i].animations();
+     room.enemys[i].draw();
+     if(room.enemys[i].spawnTime <= 0){
+      room.enemys[i].drawLifebar();
+      room.enemys[i].action();
+      room.enemys[i].collision();
+     }else{
+      room.enemys[i].spawnTime--;
+      }
+    }else{
+     room.enemys.splice(i,1);
+     if(room.enemys.length<= 0){
+       room.openDoors(true);
+     }
+    }
   }
 }
 function roomChange(direc){
-  //bullets= [];
+  bullets= [];
   //raum wird Geändert
   for (let i in map) {
-    if (map[i].x === player.xMap && map[i].y === player.yMap) {
+    if (map[i].mapX === player.xMap && map[i].mapY === player.yMap) {
       room = map[i];
     }
   }
@@ -641,7 +829,7 @@ function searchDoor(direc){
 //MAP
 function mapDraw() {
   push();
-  translate(width/2-400,height/2);
+  translate(width/2-500,height/2);
   for (let i in map) {
     switch (map[i].type) {
       case -2:
@@ -657,7 +845,7 @@ function mapDraw() {
         fill("#0000ff");
         break;
     }
-   // if(map[i].isVisited === true)
+    if(map[i].isVisited === true)
       rect(map[i].x * 10, map[i].y * 10, 10, 10);
   }
   noFill();
@@ -692,11 +880,48 @@ function mapGeneration(){
       }
   }
 }
+function getEnemyFromType(type,x,y){
+  switch(type){
+    case 0:
+      return new Slime(x,y,4);
+    break;
+    case 1:
+      return new fireMage(x,y) 
+    break;
+  }
+}
 
-
+function mousePressed(){
+  let i = getMouseInventoryClick();
+  if(i > -1){
+    if(player.inventory[i] != null){
+      player.inventory[i].action();
+      player.inventory.splice(i,1);
+    }   
+  }
+}
+function getMouseInventoryClick(){
+  if(mouseX > inventoryPos[0] && mouseX < inventoryPos[0] + 250 && mouseY > inventoryPos[1] && mouseY < inventoryPos[1] + 250)
+  {
+    let x = mouseX - inventoryPos[0];
+    let y = mouseY - inventoryPos[1];
+    let i = floor(x / 50) + 5 * floor(y/50);
+    return(i);
+  }else{
+    return -1;
+  }
+}
 function getInPointArray(x, y, array) {
   for (let i  = 0; i < array.length; i++) {
     if (x === array[i].x && y === array[i].y) {
+      return i;
+    }
+  }
+  return -1;
+}
+function getInPointMap(x, y) {
+  for (let i  = 0; i < map.length; i++) {
+    if (x === map[i].mapX && y === map[i].mapY) {
       return i;
     }
   }
@@ -738,13 +963,14 @@ function inRoom(x,y){
 }
 function colObjObj (obj1,obj2){
   let dx = abs(obj1.x - obj2.x);
-  let dy = abs(Obj1.y - obj2.y);
-  if(obj1.shape === 0 && obj2.shape === 0){
-    if(dx < (obj1.sizeX/2+obj2.sizeX/2)){
+  let dy = abs(obj1.y - obj2.y);
+  d = betrag([dx,dy]);
+  //if(obj1.shape === 0 && obj2.shape === 0){
+    if(d < (obj1.sizeX/2+obj2.sizeX/2)){
       return true;
     }
-    return false();
-  }
+    return false;
+  //}
 }
 function betrag(vektor) {
   return sqrt(sq(vektor[0]) + sq(vektor[1]));
