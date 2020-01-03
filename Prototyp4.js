@@ -43,8 +43,8 @@ TripleFireball.prototype.action = function(){
   bulletX = player.x+35*cos(player.rot-0.89);
   bulletY = player.y+35*sin(player.rot-0.89);
   let a = getAngelBetweenPoint(bulletX,bulletY,mouseX,mouseY);
-  bullets.push(new Fireballbullet(bulletX,bulletY,a,0,this.damage));
-  bullets.push(new Fireballbullet(bulletX,bulletY,a,0,this.damage));
+  bullets.push(new Fireballbullet(bulletX,bulletY,a+0.15,0,this.damage));
+  bullets.push(new Fireballbullet(bulletX,bulletY,a-0.15,0,this.damage));
   bullets.push(new Fireballbullet(bulletX,bulletY,a,0,this.damage));
 };
 
@@ -144,7 +144,7 @@ let Room = function(x,y,type){
         this.shape= 1;
         this.itemCount = 3;
         this.itemType = [-1];
-        this.enemyCount = 1;
+        this.enemyCount = 0;
         this.enemyType = [1];
         this.startPoint= [width/2, height/2];
         this.img = [roomRectangle];
@@ -156,7 +156,7 @@ let Room = function(x,y,type){
         this.img = [roomRectangle];
       break;
     case 0:
-        this.enemyCount= 5;
+        this.enemyCount= 3;
         this.enemyType= [0,0,0,0,0,0,0,0,1];
         if(rndOutcome(20))
           this.itemCount= 1;
@@ -167,8 +167,8 @@ let Room = function(x,y,type){
         this.img = [roomCircle];
       break;
     case 1:
-        this.enemyCount= rndInt(6);
-        this.enemyType= [0,1];
+        this.enemyCount= rndInt(3);
+        this.enemyType= [0];
         this.itemCount= 0;
         this.sizeX= 500;
         this.sizeY= 360;
@@ -372,6 +372,7 @@ Player.prototype.controll = function (){
       if(this.skills[i].isInstant){
         if(this.mana> this.skills[i].mana){
          this.skills[i].action();
+         console.log(this.skills[i]);
          this.mana = this.mana - this.skills[i].mana;
         }
       }else{
@@ -845,12 +846,13 @@ function mapDraw() {
         fill("#0000ff");
         break;
     }
-    if(map[i].isVisited === true)
-      rect(map[i].x * 10, map[i].y * 10, 10, 10);
+    if(map[i].isVisited === true){
+      rect(map[i].mapX * 10, map[i].mapY * 10, 10, 10);
+    }
   }
-  noFill();
   stroke(50);
   strokeWeight(2);
+  noFill();
   rect(player.xMap * 10, player.yMap * 10, 10, 10);
   pop();
 }
@@ -879,6 +881,7 @@ function mapGeneration(){
       map.push(new Room(x,y,rndType));
       }
   }
+  console.log(map);
 }
 function getEnemyFromType(type,x,y){
   switch(type){
