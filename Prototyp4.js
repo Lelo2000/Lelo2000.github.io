@@ -7,6 +7,7 @@ let time = 0;
 let inventoryPos =[width/2 + 300,height/2-200];
 let skillbarPos =[width/2 -120,height/2+225];
 let menueNow = {};
+let menueHistory = [];
 let Skill = function(name,type,mana,cooldown,img){
   this.damage = 0;
   this.mana = mana;
@@ -22,7 +23,7 @@ let Skill = function(name,type,mana,cooldown,img){
 Skill.prototype.action = function(){
 };
 let Fireball = function(){
-  Skill.call(this,"Feuerball",0,5,10,[fireball_skillbar]);
+  Skill.call(this,"Feuerball",0,0,10,[fireball_skillbar]);
   this.damage = 10;
   this.flavorText="Ein mächtiger Feuerball der deine Gegner zerschmettert";
 };
@@ -34,7 +35,7 @@ Fireball.prototype.action = function(){
   bullets.push(new Fireballbullet(bulletX,bulletY,a,0,this.damage));
 };
 let TripleFireball = function(){
-  Skill.call(this,"Dreifach Feuerball",1,10,15,[trippelFireball_skillbar]);
+  Skill.call(this,"Dreifach Feuerball",1,0,15,[trippelFireball_skillbar]);
   this.damage = 10;
   this.flavorText = "Drei kleinere Feuerbälle, um mehrere Gegner gleichzeitig zu besiegen";
 }
@@ -63,8 +64,14 @@ let Menue = function (type){
   this.type = type;
 }
 Menue.prototype.update = function (){
+  clear();
   for(let i in this.buttons){
     this.buttons[i].draw();
+    if(colPointObj(mouseX,mouseY,this.buttons[i])){
+      this.buttons[i].hover();
+    }else{
+      this.buttons[i].hoverTime = 0;
+    }
   }
 }
 let MenueStart = function(){
@@ -76,13 +83,14 @@ MenueStart.prototype = Object.create(Menue.prototype);
 
 let MenueInGame = function(){
   Menue.call(this,0);
-  this.buttons.push(new ButtonPause(inventoryPos[0]-45,inventoryPos[1]-30));
+  this.buttons.push(new ButtonPause(inventoryPos[0]+45,inventoryPos[1]-30));
 }
 MenueInGame.prototype = Object.create(Menue.prototype);
 
 let MenuePause = function(){
   Menue.call(this,2);
-  this.buttons.push(new ButtonWeiter(width/2,height/2));
+  this.buttons.push(new ButtonWeiter(width/2+60,height/2));
+  this.buttons.push(new ButtonOptionen(width/2-60,height/2));
 }
 MenuePause.prototype = Object.create(Menue.prototype);
 MenuePause.prototype.update = function(){
@@ -106,29 +114,68 @@ MenuePause.prototype.update = function(){
   pop();
   for(let i in this.buttons){
     this.buttons[i].draw();
+    if(colPointObj(mouseX,mouseY,this.buttons[i])){
+      this.buttons[i].hover();
+    }else{
+      this.buttons[i].hoverTime = 0;
+    }
   }
 }
 
 let MenueOptionen = function(){
   Menue.call(this,3);
   this.state =0;
+  this.activeButton = -1;
 }
 MenueOptionen.prototype = Object.create(Menue.prototype);
 MenueOptionen.prototype.update= function(){
   clear();
   for(let i in this.buttons){
+    if(this.buttons[i].isPressed){
+      this.activeButton = i;
+      break;
+    }else{
+      this.activeButton = -1;
+    }
+  }
+  for(let i in this.buttons){
     this.buttons[i].draw();
+    if(colPointObj(mouseX,mouseY,this.buttons[i])){
+      this.buttons[i].hover();
+    }else{
+      this.buttons[i].hoverTime = 0;
+    }
+    if(this.activeButton === i){
+      push()
+      rectMode(CENTER);
+      noFill();
+      rect(width/2+153,height/2+50*i-194,20,20)
+      pop();
+    }
   }
   for(let i in player.skills){
     if(this.state === 0){
       this.buttons.push(new ButtonOptionenTastenauswahl(width/2+153,height/2+50*i-194));
-      console.log(this.buttons);
     }
     text(player.skills[i].name,width/2-150,height/2+50*i-200,width,height);
     text(String.fromCharCode(player.skills[i].key),width/2+150,height/2+50*i-190);
   }
-  if(this.state===0)
+  if(this.state===0){
+    this.buttons.push(new ButtonBack(100,100));
     this.state= 1;
+  }
+  if(this.activeButton > -1){
+    if(this.buttons[this.activeButton].keyWhenPressed != keyCode){
+      if(keyCode >= 97 && keyCode <= 122)
+        keyCode = keyCode -32;
+      if(isKeyFree(keyCode)){
+        player.skills[this.activeButton].key = keyCode;
+        this.buttons[this.activeButton].isPressed = false;
+      }else{
+        text("Diese Taste ist schon belegt",mouseX,mouseY);
+      }
+    }
+  }
 }
 
 
@@ -173,9 +220,19 @@ let Button = function (x,y){
   this.x = x;
   this.y = y;
   this.shape = 1;
+  this.hoverTime =0;
 }; 
 Button.prototype = Object.create(Obj.prototype);
-
+Button.prototype.hover = function (){
+  push();
+  fill(255,255,255,this.hoverTime);
+  noStroke();
+  rect(this.x-this.sizeX/2,this.y-this.sizeY/2,this.sizeX,this.sizeY);
+  pop();
+  if(this.hoverTime < 100){
+    this.hoverTime = this.hoverTime +15;
+  }
+}
 let ButtonStart = function(x,y){
   Button.call(this,x,y);
   this.sizeX = 100;
@@ -224,11 +281,26 @@ let ButtonOptionenTastenauswahl = function(x,y){
   this.sizeX = 20;
   this.sizeY = 20;
   this.img=[buttonTasten];
+  this.isPressed = false;
+  this.keyWhenPressed = 0;
 }
 ButtonOptionenTastenauswahl.prototype = Object.create(Button.prototype);
 ButtonOptionenTastenauswahl.prototype.action = function(){
+  this.isPressed = true;
+  this.keyWhenPressed = keyCode;
 }
 
+let ButtonBack = function(x,y){
+  Button.call(this,x,y);
+  this.sizeX = 90;
+  this.sizeY = 30;
+  this.img = [buttonBack];
+}
+ButtonBack.prototype = Object.create(Button.prototype);
+ButtonBack.prototype.action = function(){
+  console.log(menueHistory);
+  switchMenue(menueHistory[menueHistory.length-2]);
+}
 let Door = function(x,y,direction,type){
   Obj.call(this);
   this.x = x;
@@ -444,7 +516,8 @@ let Player = function (){
   this.skill = 0;
   this.skills = [];
   this.inventory = [];
-  this.keyList = [49,50,51,52];
+  this.keyListStandardSkill = [49,50,51,52];
+  this.keyListMovement = [87,65,83,68];
 };
 Player.prototype = Object.create(LivingObject.prototype);
 Player.prototype.controll = function (){
@@ -455,19 +528,19 @@ Player.prototype.controll = function (){
   }
   //Bewegung
   //w
-  if (keyIsDown(87) && inRoom(this.x,this.y-this.sizeY/2)) {
+  if (keyIsDown(this.keyListMovement[0]) && inRoom(this.x,this.y-this.sizeY/2)) {
     this.move(-HALF_PI);
   }
   //a
-  if (keyIsDown(65)&& inRoom(this.x-this.sizeX/2,this.y)) {
+  if (keyIsDown(this.keyListMovement[1])&& inRoom(this.x-this.sizeX/2,this.y)) {
     this.move(PI);
   }
   //s
-  if (keyIsDown(83)&& inRoom(this.x,this.y+this.sizeY/2)) {
+  if (keyIsDown(this.keyListMovement[2])&& inRoom(this.x,this.y+this.sizeY/2)) {
     this.move(HALF_PI);
   }
   //d
-  if (keyIsDown(68)&& inRoom(this.x+this.sizeX/2,this.y)) {
+  if (keyIsDown(this.keyListMovement[3])&& inRoom(this.x+this.sizeX/2,this.y)) {
     this.move(0);
   }
   //Mana
@@ -499,11 +572,9 @@ Player.prototype.controll = function (){
   //  }
   for(let i = 0; i< this.skills.length; i++){
     if(keyIsDown(this.skills[i].key)){
-      console.log(this.skills[i]);
       if(this.skills[i].isInstant){
         if(this.mana> this.skills[i].mana){
          this.skills[i].action();
-         console.log(this.skills[i]);
          this.mana = this.mana - this.skills[i].mana;
         }
       }else{
@@ -578,7 +649,7 @@ Player.prototype.collision = function(){
   }
 };
 Player.prototype.setSkill = function(skill){
-  skill.key = this.keyList[this.skills.length];
+  skill.key = this.keyListStandardSkill[this.skills.length];
   this.skills.push(skill);
 };
 Player.prototype.drawSkillbar = function(){
@@ -853,13 +924,13 @@ function draw(){
     player.setSkill(new Fireball());
     player.setSkill(new TripleFireball());
     player.setSkill(new MageShield());
-    menueNow = new MenueStart();
+    switchMenue(1);
     mapGeneration();
     roomChange(-1);
     start = false;
   }
+  menueNow.update();
   if(menueNow.type === 0){
-    clear();
     mapDraw();
     room.draw();
     for(let i in room.doors){
@@ -875,7 +946,6 @@ function draw(){
     player.drawHud();
     bulletHandler();
   }
-  menueNow.update();
   time++;
 }
 function switchMenue(type){
@@ -893,6 +963,7 @@ function switchMenue(type){
       menueNow = new MenueOptionen();
     break;
   }
+  menueHistory.push(type);
 }
 function bulletHandler(){
   for(let i  in bullets){
@@ -1057,10 +1128,26 @@ function mousePressed(){
   }
   for(let i in menueNow.buttons){
     if(colPointObj(mouseX,mouseY,menueNow.buttons[i])){
+        if(menueNow.type === 3){
+          for(let j in menueNow.buttons){
+            menueNow.buttons[j].isPressed = false;
+          }
+        }
       menueNow.buttons[i].action();
       return;
     }
   }
+}
+function isKeyFree(key){
+  for(let i in player.keyListMovement){
+    if(player.keyListMovement[i] === key)
+      return false;
+  }
+  for(let i in player.skills){
+    if(player.skills[i].key === key)
+      return false;
+  }
+  return true;
 }
 function getMouseInventoryClick(){
   if(mouseX > inventoryPos[0] && mouseX < inventoryPos[0] + 250 && mouseY > inventoryPos[1] && mouseY < inventoryPos[1] + 250)
