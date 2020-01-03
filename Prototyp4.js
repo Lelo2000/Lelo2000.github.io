@@ -6,9 +6,7 @@ let bullets = [];
 let time = 0;
 let inventoryPos =[width/2 + 300,height/2-200];
 let skillbarPos =[width/2 -120,height/2+225];
-let menueNow = 1;
-let buttons = [];
-
+let menueNow = {};
 let Skill = function(name,type,mana,cooldown,img){
   this.damage = 0;
   this.mana = mana;
@@ -60,7 +58,78 @@ MageShield.prototype.action = function(){
   player.invincibleTime = 2;
 }
 
+let Menue = function (type){
+  this.buttons = [];
+  this.type = type;
+}
+Menue.prototype.update = function (){
+  for(let i in this.buttons){
+    this.buttons[i].draw();
+  }
+}
+let MenueStart = function(){
+  Menue.call(this,1);
+  this.buttons.push(new ButtonStart(width/2,height/2));
+  this.buttons.push(new ButtonOptionen(width/2,height/2+40));
+}
+MenueStart.prototype = Object.create(Menue.prototype);
 
+let MenueInGame = function(){
+  Menue.call(this,0);
+  this.buttons.push(new ButtonPause(inventoryPos[0]-45,inventoryPos[1]-30));
+}
+MenueInGame.prototype = Object.create(Menue.prototype);
+
+let MenuePause = function(){
+  Menue.call(this,2);
+  this.buttons.push(new ButtonWeiter(width/2,height/2));
+}
+MenuePause.prototype = Object.create(Menue.prototype);
+MenuePause.prototype.update = function(){
+  clear();
+  mapDraw();
+  room.draw();
+  for(let i in room.doors){
+    room.doors[i].draw();
+  }
+  for(let j in room.items){
+    room.items[j].draw();
+  }
+  player.draw();
+  player.drawHud();
+  for(let k in room.enemys){
+    room.enemys[k].draw();
+  }
+  push();
+  fill(0,0,0,40);
+  rect(0,0,width,height);
+  pop();
+  for(let i in this.buttons){
+    this.buttons[i].draw();
+  }
+}
+
+let MenueOptionen = function(){
+  Menue.call(this,3);
+  this.state =0;
+}
+MenueOptionen.prototype = Object.create(Menue.prototype);
+MenueOptionen.prototype.update= function(){
+  clear();
+  for(let i in this.buttons){
+    this.buttons[i].draw();
+  }
+  for(let i in player.skills){
+    if(this.state === 0){
+      this.buttons.push(new ButtonOptionenTastenauswahl(width/2+153,height/2+50*i-194));
+      console.log(this.buttons);
+    }
+    text(player.skills[i].name,width/2-150,height/2+50*i-200,width,height);
+    text(String.fromCharCode(player.skills[i].key),width/2+150,height/2+50*i-190);
+  }
+  if(this.state===0)
+    this.state= 1;
+}
 
 
 let Obj = function(){
@@ -148,6 +217,16 @@ let ButtonOptionen = function(x,y){
 ButtonOptionen.prototype = Object.create(Button.prototype);
 ButtonOptionen.prototype.action = function(){
   switchMenue(3);
+}
+
+let ButtonOptionenTastenauswahl = function(x,y){
+  Button.call(this,x,y);
+  this.sizeX = 20;
+  this.sizeY = 20;
+  this.img=[buttonTasten];
+}
+ButtonOptionenTastenauswahl.prototype = Object.create(Button.prototype);
+ButtonOptionenTastenauswahl.prototype.action = function(){
 }
 
 let Door = function(x,y,direction,type){
@@ -774,12 +853,12 @@ function draw(){
     player.setSkill(new Fireball());
     player.setSkill(new TripleFireball());
     player.setSkill(new MageShield());
-    switchMenue(menueNow);
+    menueNow = new MenueStart();
     mapGeneration();
     roomChange(-1);
     start = false;
   }
-  if(menueNow === 0){
+  if(menueNow.type === 0){
     clear();
     mapDraw();
     room.draw();
@@ -796,49 +875,23 @@ function draw(){
     player.drawHud();
     bulletHandler();
   }
-  menueManager();
+  menueNow.update();
   time++;
 }
-function menueManager (){
-  if(menueNow === 2){
-    clear();
-    mapDraw();
-    room.draw();
-    for(let i in room.doors){
-      room.doors[i].draw();
-    }
-    for(let j in room.items){
-      room.items[j].draw();
-    }
-    player.draw();
-    player.drawHud();
-    for(let k in room.enemys){
-      room.enemys[k].draw();
-    }
-    push();
-    fill(0,0,0,40);
-    rect(0,0,width,height);
-    pop();
-  }
-  if(menueNow===3){}
-  for(let i in buttons){
-    buttons[i].draw();
-  }
-}
 function switchMenue(type){
-  buttons = [];
-  menueNow = type;
   switch(type){
     case 0:
-      buttons.push(new ButtonPause(inventoryPos[0]+45,inventoryPos[1]-30));
-      break;
+      menueNow = new MenueInGame();
+    break;
     case 1:
-      buttons.push(new ButtonStart(width/2,height/2));
-      buttons.push(new ButtonOptionen(width/2,height/2+40));
-      break;
+      menueNow = new MenueStart();
+    break;
     case 2:
-      buttons.push(new ButtonWeiter(width/2+200,height/2));
-      break;
+      menueNow = new MenuePause();
+    break;
+    case 3:
+      menueNow = new MenueOptionen();
+    break;
   }
 }
 function bulletHandler(){
@@ -993,7 +1046,7 @@ function getEnemyFromType(type,x,y){
 }
 
 function mousePressed(){
-  if(menueNow === 0){
+  if(menueNow.type === 0){
     let i = getMouseInventoryClick();
     if(i > -1){
       if(player.inventory[i] != null){
@@ -1002,9 +1055,10 @@ function mousePressed(){
       }   
     }
   }
-  for(let i in buttons){
-    if(colPointObj(mouseX,mouseY,buttons[i])){
-      buttons[i].action();
+  for(let i in menueNow.buttons){
+    if(colPointObj(mouseX,mouseY,menueNow.buttons[i])){
+      menueNow.buttons[i].action();
+      return;
     }
   }
 }
