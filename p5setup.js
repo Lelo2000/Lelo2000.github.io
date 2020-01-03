@@ -27,7 +27,8 @@ function preload(){
   enemyFireball = loadImage("Bilder/enemyFireball.svg");
   roomRectangle = loadImage("Bilder/roomRectangle.svg");
   roomCircle = loadImage("Bilder/roomCircle.svg");
-
+  scrollTrippleFireball = loadImage("Bilder/ScrollTrippleFireball.svg");
+  magicShield_Skillbar = loadImage("Bilder/MagicShield_Skillbar.svg");
   
   soundFormats('mp3', 'ogg');
   //http://soundbible.com/tags-fireball.html
@@ -62,6 +63,7 @@ function setup() {
   enemyFireMageDead.loadPixels();
   enemyFireball.loadPixels();
   roomRectangle.loadPixels();
+  scrollTrippleFireball.loadPixels();
 }
 
 window.addEventListener("resize", function() {

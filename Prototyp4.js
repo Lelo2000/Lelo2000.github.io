@@ -50,7 +50,7 @@ TripleFireball.prototype.action = function(){
 };
 
 let MageShield = function(){
-  Skill.call(this,"Magisches Schild",2,1,0,[fireball_skillbar]);
+  Skill.call(this,"Magisches Schild",2,1,0,[magicShield_Skillbar]);
   this.flavorText= "Schützte dich mit einem Magischen Schild, der Angriffe abwehrt.",
   this.isInstant = true;
 }
@@ -345,8 +345,8 @@ let Room = function(x,y,type){
         this.sizeX= 469;
         this.sizeY= 430;
         this.shape= 1;
-        this.itemCount = 3;
-        this.itemType = [-1];
+        this.itemCount = rndInt(1);
+        this.itemType = [0];
         this.enemyCount = 0;
         this.enemyType = [1];
         this.startPoint= [width/2, height/2];
@@ -362,8 +362,8 @@ let Room = function(x,y,type){
         this.enemyCount= 3;
         this.enemyType= [0,0,0,0,0,0,0,0,1];
         if(rndOutcome(20))
-          this.itemCount= 1;
-        this.itemType = [-1];
+          this.itemCount = 1;
+        this.itemType = [0];
         this.sizeX= 430;
         this.sizeY= 430;
         this.shape= 0;
@@ -372,7 +372,6 @@ let Room = function(x,y,type){
     case 1:
         this.enemyCount= rndInt(3);
         this.enemyType= [0];
-        this.itemCount= 0;
         this.sizeX= 500;
         this.sizeY= 360;
         this.shape= 1;
@@ -394,7 +393,8 @@ Room.prototype.generation = function (){
     }
     if(this.isVisited === false){
       while(this.items.length < this.itemCount){
-          let item = new HealingPotion(0,0);
+          let itemType = random(this.itemType);
+          let item = getItemFromType(itemType,0,0);
           let pos = this.rndPositionInRoom(item.sizeX);
           item.x = pos[0];
           item.y = pos[1];  
@@ -469,6 +469,7 @@ let Item = function(x,y,name,type){
   this.y = y;
   this.type = type;
   this.instantConsumable = false;
+  this.isUsed = false;
   this.name = name;
 }
 Item.prototype = Object.create(Obj.prototype);
@@ -477,12 +478,38 @@ let HealingPotion = function (x,y){
   Item.call(this,x,y,"Heiltrank",0);
   this.sizeX = 30;
   this.img = [healingPotion];
-}
+};
 HealingPotion.prototype = Object.create(Item.prototype);
 HealingPotion.prototype.action = function(){
   player.hp = player.hp + 15;
-}
+};
+let HealingBlob = function(x,y){
+  Item.call(this,x,y,"Healing Blob",-1);
+  this.sizeX= 8;
+  this.img = [lifeItem];
+  this.instantConsumable = true;
+};
+HealingBlob.prototype = Object.create(Item.prototype);
+HealingBlob.prototype.action = function (){
+  if(player.hp < player.maxHp){
+    player.hp = player.hp +5;
+    this.isUsed = true;
+  }
+};
 
+let ScrollTrippleFireball = function(x,y){
+  Item.call(this,x,y,"Schriftrolle Dreifach Feuerball",-2);
+  this.sizeX = 40;
+  this.img = [scrollTrippleFireball];
+  this.instantConsumable = true;
+};
+ScrollTrippleFireball.prototype = Object.create(Item.prototype);
+ScrollTrippleFireball.prototype.action= function(){
+  if(player.searchSkill(1) < 0){
+    player.setSkill(new TripleFireball());
+    this.isUsed = true;
+  }
+};
 
 let LivingObject= function(maxHp) {
   Obj.call(this);
@@ -625,9 +652,15 @@ Player.prototype.collision = function(){
   }
   for(let i in room.items){
     if(colObjObj(this,room.items[i])){
-      this.inventory.push(room.items[i]);
-      console.log(this.inventory);
-      room.items.splice(i,1);
+      if(room.items[i].instantConsumable === false){
+        this.inventory.push(room.items[i]);
+        console.log(this.inventory);
+        room.items.splice(i,1);
+      }else{
+        room.items[i].action();
+        if(room.items[i].isUsed)
+          room.items.splice(i,1);
+      }
     }
   }
   for(let i in bullets){
@@ -641,7 +674,7 @@ Player.prototype.collision = function(){
   }
   if(this.invincibleTime <= 0){
     for(let i in room.enemys){
-      if(colObjObj(this,room.enemys[i])){
+      if(colObjObj(this,room.enemys[i]) &&room.enemys[i].spawnTime <= 0){
         this.hp = this.hp-room.enemys[i].bodyDamage;
         this.invincibleTime = 5;
       }
@@ -747,6 +780,14 @@ Player.prototype.animations = function(){
     pop();
   }
 };
+Player.prototype.searchSkill = function(t){
+  for(let i in this.skills){
+    if(this.skills[i].type === t){
+      return i;
+    }
+  }
+  return -1;
+}
 
 let Bullet = function(x,y,a,type,maxHp,img,size,speed,damage){
   LivingObject.call(this, maxHp);
@@ -827,17 +868,18 @@ Enemy.prototype.collision = function (){
         this.hp = this.hp - bullets[i].damage;
         bullets.splice(i,1);
         if(this.hp <= 0){
-          this.dead();
+          this.onDeath();
+          this.isAlive = false;
+          this.skin = 1;
+          room.deadEnemys.push(this);  
         }
         return;
       }
     }
   }
 }
-Enemy.prototype.dead = function(){
-  this.isAlive = false;
-  this.skin = 1;
-  room.deadEnemys.push(this);  
+Enemy.prototype.onDeath = function(){
+
 }
 Enemy.prototype.animations = function(){
   if(this.animationTimer>0){
@@ -867,15 +909,17 @@ Slime.prototype = Object.create(Enemy.prototype);
 Slime.prototype.action= function (){
   this.movingToPlayer();
 }
-Slime.prototype.dead = function(){
+Slime.prototype.onDeath= function(){
+  //Teilung in 2 Schleims
   if(this.bigness>2){
     this.bigness--;
     room.enemys.push(new Slime(this.x-random(-8,8),this.y-random(-8,8),this.bigness));
     room.enemys.push(new Slime(this.x-random(-8,8),this.y-random(-8,8),this.bigness));
   }  
-  this.isAlive = false;
-  this.skin = 1;
-  room.deadEnemys.push(this);  
+  //Item Dropp
+  if(rndOutcome(5)){
+    room.items.push(new HealingBlob(this.x,this.y));
+  }
 }
 let fireMage = function(x,y){
   Enemy.call(this,240,1)
@@ -912,7 +956,11 @@ fireMage.prototype.action = function(){
     this.aTime--;
   }
 }
-
+fireMage.prototype.onDeath= function(){
+  if(rndOutcome(30)){
+    room.items.push(new ScrollTrippleFireball(this.x,this.y));
+  }
+}
 
 
 let start = true;
@@ -922,7 +970,6 @@ function draw(){
   if(start){
     player = new Player();
     player.setSkill(new Fireball());
-    player.setSkill(new TripleFireball());
     player.setSkill(new MageShield());
     switchMenue(1);
     mapGeneration();
@@ -936,11 +983,11 @@ function draw(){
     for(let i in room.doors){
       room.doors[i].draw();
     }
+    enemyManager();
+    playerManager();
     for(let j in room.items){
       room.items[j].draw();
     }
-    enemyManager();
-    playerManager();
     player.animations();
     player.draw();
     player.drawHud();
@@ -1112,6 +1159,16 @@ function getEnemyFromType(type,x,y){
     break;
     case 1:
       return new fireMage(x,y) 
+    break;
+  }
+}
+function getItemFromType(type,x,y){
+  switch(type){
+    case -2:
+      return new ScrollTrippleFireball(x,y);
+    break;
+    case 0:
+      return new HealingPotion(x,y);
     break;
   }
 }
