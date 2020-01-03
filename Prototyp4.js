@@ -6,6 +6,8 @@ let bullets = [];
 let time = 0;
 let inventoryPos =[width/2 + 300,height/2-200];
 let skillbarPos =[width/2 -120,height/2+225];
+let menueNow = 1;
+let buttons = [];
 
 let Skill = function(name,type,mana,cooldown,img){
   this.damage = 0;
@@ -97,6 +99,56 @@ Obj.prototype.action = function (){
   console.log("Hey ich bin"+this);
 }
 
+let Button = function (x,y){
+  Obj.call(this);
+  this.x = x;
+  this.y = y;
+  this.shape = 1;
+}; 
+Button.prototype = Object.create(Obj.prototype);
+
+let ButtonStart = function(x,y){
+  Button.call(this,x,y);
+  this.sizeX = 100;
+  this.sizeY = 50;
+  this.img = [startButton];
+}
+ButtonStart.prototype = Object.create(Button.prototype);
+ButtonStart.prototype.action = function (){
+  switchMenue(0);
+}
+
+let ButtonPause = function(x,y){
+  Button.call(this,x,y);
+  this.sizeX = 90;
+  this.sizeY = 30;
+  this.img = [buttonPause];
+}
+ButtonPause.prototype = Object.create(Button.prototype);
+ButtonPause.prototype.action = function (){
+  switchMenue(2);
+}
+let ButtonWeiter = function(x,y){
+  Button.call(this,x,y);
+  this.sizeX = 100;
+  this.sizeY = 50;
+  this.img= [buttonWeiter];
+}
+ButtonWeiter.prototype = Object.create(Button.prototype);
+ButtonWeiter.prototype.action = function(){
+  switchMenue(0);
+}
+
+let ButtonOptionen = function(x,y){
+  Button.call(this,x,y);
+  this.sizeX = 100;
+  this.sizeY = 50;
+  this.img = [buttonOptionen];
+}
+ButtonOptionen.prototype = Object.create(Button.prototype);
+ButtonOptionen.prototype.action = function(){
+  switchMenue(3);
+}
 
 let Door = function(x,y,direction,type){
   Obj.call(this);
@@ -722,26 +774,72 @@ function draw(){
     player.setSkill(new Fireball());
     player.setSkill(new TripleFireball());
     player.setSkill(new MageShield());
+    switchMenue(menueNow);
     mapGeneration();
     roomChange(-1);
     start = false;
   }
-  clear();
-  mapDraw();
-  room.draw();
-  for(let i in room.doors){
-    room.doors[i].draw();
+  if(menueNow === 0){
+    clear();
+    mapDraw();
+    room.draw();
+    for(let i in room.doors){
+      room.doors[i].draw();
+    }
+    for(let j in room.items){
+      room.items[j].draw();
+    }
+    enemyManager();
+    playerManager();
+    player.animations();
+    player.draw();
+    player.drawHud();
+    bulletHandler();
   }
-  for(let j in room.items){
-    room.items[j].draw();
-  }
-  enemyManager();
-  playerManager();
-  player.animations();
-  player.draw();
-  player.drawHud();
-  bulletHandler();
+  menueManager();
   time++;
+}
+function menueManager (){
+  if(menueNow === 2){
+    clear();
+    mapDraw();
+    room.draw();
+    for(let i in room.doors){
+      room.doors[i].draw();
+    }
+    for(let j in room.items){
+      room.items[j].draw();
+    }
+    player.draw();
+    player.drawHud();
+    for(let k in room.enemys){
+      room.enemys[k].draw();
+    }
+    push();
+    fill(0,0,0,40);
+    rect(0,0,width,height);
+    pop();
+  }
+  if(menueNow===3){}
+  for(let i in buttons){
+    buttons[i].draw();
+  }
+}
+function switchMenue(type){
+  buttons = [];
+  menueNow = type;
+  switch(type){
+    case 0:
+      buttons.push(new ButtonPause(inventoryPos[0]+45,inventoryPos[1]-30));
+      break;
+    case 1:
+      buttons.push(new ButtonStart(width/2,height/2));
+      buttons.push(new ButtonOptionen(width/2,height/2+40));
+      break;
+    case 2:
+      buttons.push(new ButtonWeiter(width/2+200,height/2));
+      break;
+  }
 }
 function bulletHandler(){
   for(let i  in bullets){
@@ -895,12 +993,19 @@ function getEnemyFromType(type,x,y){
 }
 
 function mousePressed(){
-  let i = getMouseInventoryClick();
-  if(i > -1){
-    if(player.inventory[i] != null){
-      player.inventory[i].action();
-      player.inventory.splice(i,1);
-    }   
+  if(menueNow === 0){
+    let i = getMouseInventoryClick();
+    if(i > -1){
+      if(player.inventory[i] != null){
+        player.inventory[i].action();
+        player.inventory.splice(i,1);
+      }   
+    }
+  }
+  for(let i in buttons){
+    if(colPointObj(mouseX,mouseY,buttons[i])){
+      buttons[i].action();
+    }
   }
 }
 function getMouseInventoryClick(){

@@ -62,7 +62,6 @@ function setup() {
   enemyFireMageDead.loadPixels();
   enemyFireball.loadPixels();
   roomRectangle.loadPixels();
-  roomCircle.loadPixels();
 }
 
 window.addEventListener("resize", function() {
