@@ -77,7 +77,7 @@ Menue.prototype.update = function (){
 let MenueStart = function(){
   Menue.call(this,1);
   this.buttons.push(new ButtonStart(width/2,height/2));
-  this.buttons.push(new ButtonOptionen(width/2,height/2+40));
+  this.buttons.push(new ButtonOptionen(width/2,height/2+60));
 }
 MenueStart.prototype = Object.create(Menue.prototype);
 
@@ -1020,16 +1020,16 @@ function roomChange(direc){
   // Spieler wird zur Tür gesetzt
     if(direc === 0){
     player.x = searchDoor(2).x+40;
-    player.y = searchDoor(2).y+20;
+    player.y = searchDoor(2).y;
   }else if(direc === 2){
-    player.x = searchDoor(0).x-1;
-    player.y = searchDoor(0).y+20;
+    player.x = searchDoor(0).x-40;
+    player.y = searchDoor(0).y;
   }else if(direc === 1){
-    player.x = searchDoor(3).x+20;
+    player.x = searchDoor(3).x;
     player.y = searchDoor(3).y+40;
   }else if(direc === 3){
-    player.x = searchDoor(1).x+20;
-    player.y = searchDoor(1).y-1;
+    player.x = searchDoor(1).x;
+    player.y = searchDoor(1).y-40;
   }else{
     player.x = room.startPoint[0];
     player.y = room.startPoint[1];
