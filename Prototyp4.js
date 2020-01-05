@@ -318,34 +318,42 @@ let ButtonRuneSwitch = function (x,y,id){
   this.sizeX = 40;
   this.sizeY = 40;
   this.img = [buttonTasten];
-  this.rune = [];
   this.id = id;
 }
 ButtonRuneSwitch.prototype = Object.create(Button.prototype);
 ButtonRuneSwitch.prototype.action = function(){
+  console.log(player.runes[this.id]);
+  console.log(mouseDrag[0]);
   if(mouseDrag.length >0){
     if(mouseDrag[0].isRune){
       this.hover();
-      this.rune[0] = mouseDrag[0].img;
-      this.rune[1] = mouseDrag[0].rot;
       if(player.runes[this.id] === undefined){
         player.runes[this.id] = mouseDrag[0];
-        mouseDrag.splice(0,1);
+        mouseDrag = [];
       }else{
         let zwischenablage = mouseDrag[0];
         mouseDrag[0] = player.runes[this.id];
         player.runes[this.id] = zwischenablage;
       }
     }
+  }else{
+    if(player.runes[this.id] != undefined){
+      mouseDrag[0] = player.runes[this.id];
+      delete player.runes[this.id];
+    }
   }
 }
 ButtonRuneSwitch.prototype.draw = function (){
-  if(this.rune.length>0){
+  push();
+  imageMode(CENTER);
+  image(this.img[0],this.x,this.y,this.sizeX,this.sizeY);
+  pop();
+  if(player.runes[this.id] != undefined){
     push();
     imageMode(CENTER);
     translate(this.x,this.y);
-    rotate(this.rune[1]);
-    image(this.rune[0][0],0,0,40,40);
+    rotate(player.runes[this.id].rot);
+    image(player.runes[this.id].img[0],0,0,40,40);
     pop();
   }
 }
@@ -374,7 +382,7 @@ ButtonRuneSwitch.prototype.hover = function(){
         case 7:
           mouseDrag[0].rot = -PI*1/4; 
         break;
-    }
+      }
     }
   }
 }
@@ -582,12 +590,14 @@ HealingPotion.prototype.action = function(){
   player.hp = player.hp + 15;
   this.isUsed = true;
 };
+
 let HealingBlob = function(x,y){
   Item.call(this,x,y,"Healing Blob",-1);
   this.sizeX= 8;
   this.img = [lifeItem];
   this.instantConsumable = true;
 };
+
 HealingBlob.prototype = Object.create(Item.prototype);
 HealingBlob.prototype.action = function (){
   if(player.hp < player.maxHp){
