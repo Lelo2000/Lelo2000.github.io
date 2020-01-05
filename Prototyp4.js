@@ -6,7 +6,7 @@ let bullets = [];
 let time = 0;
 let inventoryPos =[width/2 + 300,height/2-200];
 let skillbarPos =[width/2 -120,height/2+225];
-let runenPos = [width/2-120,height/2];
+let runenPos = [width/2-400,height/2-150];
 let menueNow = {};
 let menueHistory = [];
 let mouseDrag = [];
@@ -211,7 +211,7 @@ Obj.prototype.draw = function(){
     if(this.shape === 1)
       rect(0,0,this.sizeX,this.sizeY);
     if(this.shape === 0)
-      ellipse(0,0,this.sizeX,this.sizeY);
+      ellipse(0,0,this.sizeX,this.sizeX);
   }  
   pop();
 };
@@ -760,9 +760,27 @@ Player.prototype.drawInventory = function(){
   }
 }
 Player.prototype.drawRunes = function(){
-  for(let i in this.runes){
-    image(this.runes[i].img[0],100,100,50,50);
-  }
+  push();
+  imageMode(CENTER);
+  image(runenCenter,runenPos[0],runenPos[1],100,100);
+  noFill();
+  //Oben
+  rect(runenPos[0]-20,runenPos[1]-90,40,40);
+  //Schräg oben Rechts
+  rect(runenPos[0]+28,runenPos[1]-68,40,40);
+  // Mitte Rechts
+  rect(runenPos[0]+50,runenPos[1]-20,40,40);
+  //Schräg unte Rechts
+  rect(runenPos[0]+28,runenPos[1]+29,40,40);
+  //Unten
+  rect(runenPos[0]-20,runenPos[1]+50,40,40);
+  //Schräg oben Links
+  rect(runenPos[0]-72,runenPos[1]-68,40,40);
+  // Mitte Links
+  rect(runenPos[0]-90,runenPos[1]-20,40,40);
+  //Schräg unte Link
+  rect(runenPos[0]-72,runenPos[1]+29,40,40);
+  pop();
 }
 Player.prototype.drawSkillbarHover = function(){
   for(let i = 0; i < this.skills.length; i++){
@@ -792,11 +810,8 @@ Player.prototype.drawHud = function(){
   this.drawStats();
   this.drawSkillbarHover();
   this.drawRunes();
-  push();
   text("M: Map   Strg: Items im inventar bewegen",width/2-400,height/2+250);
-  imageMode(CENTER);
-  //image(runenCenter,runenPos[0],runenPos[1],50,50);
-  pop();
+
 };
 Player.prototype.animations = function(){
   if(this.animationTimer> 0){
@@ -1228,6 +1243,35 @@ function mouseDragUpdate(){
   if(mouseDrag.length != 0){
     mouseDrag[0].x = mouseX;
     mouseDrag[0].y = mouseY;
+    if(mouseDrag[0].type === 1){
+      let i = getMouseRunenBoardClick();
+      switch(i){
+        case 1:
+          mouseDrag[0].rot = PI/4; 
+        break;
+        case 2:
+          mouseDrag[0].rot = PI/2; 
+        break;
+        case 3:
+          mouseDrag[0].rot = PI*3/4; 
+        break;
+        case 4:
+          mouseDrag[0].rot = -PI; 
+        break;
+        case 5:
+          mouseDrag[0].rot = -PI*3/4; 
+        break;
+        case 6:
+          mouseDrag[0].rot = -PI/2; 
+        break;
+        case 7:
+          mouseDrag[0].rot = -PI*1/4; 
+        break;
+        default:
+          mouseDrag[0].rot = 0;
+        break;
+      }
+    }
     mouseDrag[0].draw();
   }
 }
@@ -1267,6 +1311,20 @@ function mousePressed(){
       return;
     }
   }
+  if(mouseDrag.length != 0){
+    if(mouseDrag[0].type === 1){
+      let j = getMouseRunenBoardClick();
+      if(j > -1){
+        if(player.runes[j] === undefined){
+          player.runes[j] = mouseDrag[0];
+        }else{
+          let zwischenablage = mouseDrag[0];
+          mouseDrag[0] = player.runes[j];
+          player.runes[j] = zwischenablage;
+        }
+      }
+    }
+  }
 }
 function isKeyFree(key){
   for(let i in player.keyListMovement){
@@ -1289,6 +1347,32 @@ function getMouseInventoryClick(){
   }else{
     return -1;
   }
+}
+function getMouseRunenBoardClick(){
+  //Oben
+  if(colPointBox(mouseX,mouseY,runenPos[0]-20,runenPos[1]-90,40,40))
+    return 0
+  //Schrägt oben rechts
+  if(colPointBox(mouseX,mouseY,runenPos[0]+28,runenPos[1]-68,40,40))
+    return 1;
+  //Mitte rechts
+  if(colPointBox(mouseX,mouseY,runenPos[0]+50,runenPos[1]-20,40,40))
+    return 2;
+  //Schrägt unten rechts
+  if(colPointBox(mouseX,mouseY,runenPos[0]+28,runenPos[1]+29,40,40))
+    return 3;
+  //Unten
+  if(colPointBox(mouseX,mouseY,runenPos[0]-20,runenPos[1]+50,40,40))
+    return 4;
+  //Schräg unten links
+  if(colPointBox(mouseX,mouseY,runenPos[0]-72,runenPos[1]+29,40,40))
+    return 5;
+  //Mitte Links
+  if(colPointBox(mouseX,mouseY,runenPos[0]-90,runenPos[1]-20,40,40))
+    return 6;
+  if(colPointBox(mouseX,mouseY,runenPos[0]-72,runenPos[1]-68,40,40))
+    return 7;
+  return -1;
 }
 function getInPointArray(x, y, array) {
   for (let i  = 0; i < array.length; i++) {

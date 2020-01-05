@@ -30,7 +30,7 @@ function preload(){
   scrollTrippleFireball = loadImage("Bilder/ScrollTrippleFireball.svg");
   magicShield_Skillbar = loadImage("Bilder/MagicShield_Skillbar.svg");
   runeMaxMana = loadImage("Bilder/runeMana.svg");
-  //runenCenter = loadImage("Bilder/runenMitte.svg");
+  runenCenter = loadImage("Bilder/runenMitte.svg");
 
 
   soundFormats('mp3', 'ogg');
