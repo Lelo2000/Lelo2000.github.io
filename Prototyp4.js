@@ -88,6 +88,22 @@ MenueStart.prototype = Object.create(Menue.prototype);
 let MenueInGame = function(){
   Menue.call(this,0);
   this.buttons.push(new ButtonPause(inventoryPos[0]+45,inventoryPos[1]-30));
+  //Runenbuttons: Oben
+  this.buttons.push(new ButtonRuneSwitch(runenPos[0],runenPos[1]-70,0));
+  //Oben rechts
+  this.buttons.push(new ButtonRuneSwitch(runenPos[0]+40,runenPos[1]-40,1));
+  //Rechts
+  this.buttons.push(new ButtonRuneSwitch(runenPos[0]+70,runenPos[1],2));
+  //Unten rechts
+  this.buttons.push(new ButtonRuneSwitch(runenPos[0]+40,runenPos[1]+40,3));
+  //Unten
+  this.buttons.push(new ButtonRuneSwitch(runenPos[0],runenPos[1]+70,4));
+  //Unten links
+  this.buttons.push(new ButtonRuneSwitch(runenPos[0]-40,runenPos[1]+40,5));
+  //Links
+  this.buttons.push(new ButtonRuneSwitch(runenPos[0]-70,runenPos[1],6));
+  //Oben Links
+  this.buttons.push(new ButtonRuneSwitch(runenPos[0]-40,runenPos[1]-40,7));
 }
 MenueInGame.prototype = Object.create(Menue.prototype);
 
@@ -292,6 +308,69 @@ ButtonOptionenTastenauswahl.prototype = Object.create(Button.prototype);
 ButtonOptionenTastenauswahl.prototype.action = function(){
   this.isPressed = true;
   this.keyWhenPressed = keyCode;
+}
+
+let ButtonRuneSwitch = function (x,y,id){
+  Button.call(this,x,y);
+  this.sizeX = 40;
+  this.sizeY = 40;
+  this.img = [buttonTasten];
+  this.rune = [];
+  this.id = id;
+}
+ButtonRuneSwitch.prototype = Object.create(Button.prototype);
+ButtonRuneSwitch.prototype.action = function(){
+  if(mouseDrag.length >0){
+    if(mouseDrag[0].type ===1){
+      this.hover();
+      this.rune[0] = mouseDrag[0].img;
+      this.rune[1] = mouseDrag[0].rot;
+      if(player.runes[this.id] === undefined){
+        player.runes[this.id] = mouseDrag[0];
+      }else{
+        let zwischenablage = mouseDrag[0];
+        mouseDrag[0] = player.runes[this.id];
+        player.runes[this.id] = zwischenablage;
+      }
+    }
+  }
+}
+ButtonRuneSwitch.prototype.draw = function (){
+  if(this.rune.length>0){
+    push();
+    imageMode(CENTER);
+    translate(this.x,this.y);
+    rotate(this.rune[1]);
+    image(this.rune[0][0],0,0,40,40);
+    pop();
+  }
+}
+ButtonRuneSwitch.prototype.hover = function(){
+  if(mouseDrag.length > 0){
+    switch(this.id){
+      case 1:
+        mouseDrag[0].rot = PI/4; 
+      break;
+      case 2:
+        mouseDrag[0].rot = PI/2; 
+      break;
+      case 3:
+        mouseDrag[0].rot = PI*3/4; 
+      break;
+      case 4:
+        mouseDrag[0].rot = -PI; 
+      break;
+      case 5:
+        mouseDrag[0].rot = -PI*3/4; 
+      break;
+      case 6:
+        mouseDrag[0].rot = -PI/2; 
+      break;
+      case 7:
+        mouseDrag[0].rot = -PI*1/4; 
+      break;
+    }
+  }
 }
 
 let ButtonBack = function(x,y){
@@ -763,23 +842,23 @@ Player.prototype.drawRunes = function(){
   push();
   imageMode(CENTER);
   image(runenCenter,runenPos[0],runenPos[1],100,100);
-  noFill();
-  //Oben
-  rect(runenPos[0]-20,runenPos[1]-90,40,40);
-  //Schräg oben Rechts
-  rect(runenPos[0]+28,runenPos[1]-68,40,40);
-  // Mitte Rechts
-  rect(runenPos[0]+50,runenPos[1]-20,40,40);
-  //Schräg unte Rechts
-  rect(runenPos[0]+28,runenPos[1]+29,40,40);
-  //Unten
-  rect(runenPos[0]-20,runenPos[1]+50,40,40);
-  //Schräg oben Links
-  rect(runenPos[0]-72,runenPos[1]-68,40,40);
-  // Mitte Links
-  rect(runenPos[0]-90,runenPos[1]-20,40,40);
-  //Schräg unte Link
-  rect(runenPos[0]-72,runenPos[1]+29,40,40);
+  // noFill();
+  // //Oben
+  // rect(runenPos[0]-20,runenPos[1]-90,40,40);
+  // //Schräg oben Rechts
+  // rect(runenPos[0]+28,runenPos[1]-68,40,40);
+  // // Mitte Rechts
+  // rect(runenPos[0]+50,runenPos[1]-20,40,40);
+  // //Schräg unte Rechts
+  // rect(runenPos[0]+28,runenPos[1]+29,40,40);
+  // //Unten
+  // rect(runenPos[0]-20,runenPos[1]+50,40,40);
+  // //Schräg oben Links
+  // rect(runenPos[0]-72,runenPos[1]-68,40,40);
+  // // Mitte Links
+  // rect(runenPos[0]-90,runenPos[1]-20,40,40);
+  // //Schräg unte Link
+  // rect(runenPos[0]-72,runenPos[1]+29,40,40);
   pop();
 }
 Player.prototype.drawSkillbarHover = function(){
@@ -1243,36 +1322,8 @@ function mouseDragUpdate(){
   if(mouseDrag.length != 0){
     mouseDrag[0].x = mouseX;
     mouseDrag[0].y = mouseY;
-    if(mouseDrag[0].type === 1){
-      let i = getMouseRunenBoardClick();
-      switch(i){
-        case 1:
-          mouseDrag[0].rot = PI/4; 
-        break;
-        case 2:
-          mouseDrag[0].rot = PI/2; 
-        break;
-        case 3:
-          mouseDrag[0].rot = PI*3/4; 
-        break;
-        case 4:
-          mouseDrag[0].rot = -PI; 
-        break;
-        case 5:
-          mouseDrag[0].rot = -PI*3/4; 
-        break;
-        case 6:
-          mouseDrag[0].rot = -PI/2; 
-        break;
-        case 7:
-          mouseDrag[0].rot = -PI*1/4; 
-        break;
-        default:
-          mouseDrag[0].rot = 0;
-        break;
-      }
-    }
     mouseDrag[0].draw();
+    mouseDrag[0].rot = 0;
   }
 }
 function mousePressed(){
@@ -1309,20 +1360,6 @@ function mousePressed(){
         }
       menueNow.buttons[i].action();
       return;
-    }
-  }
-  if(mouseDrag.length != 0){
-    if(mouseDrag[0].type === 1){
-      let j = getMouseRunenBoardClick();
-      if(j > -1){
-        if(player.runes[j] === undefined){
-          player.runes[j] = mouseDrag[0];
-        }else{
-          let zwischenablage = mouseDrag[0];
-          mouseDrag[0] = player.runes[j];
-          player.runes[j] = zwischenablage;
-        }
-      }
     }
   }
 }
