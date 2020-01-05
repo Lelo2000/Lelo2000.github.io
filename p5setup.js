@@ -29,7 +29,10 @@ function preload(){
   roomCircle = loadImage("Bilder/roomCircle.svg");
   scrollTrippleFireball = loadImage("Bilder/ScrollTrippleFireball.svg");
   magicShield_Skillbar = loadImage("Bilder/MagicShield_Skillbar.svg");
-  
+  runeMaxMana = loadImage("Bilder/runeMana.svg");
+  //runenCenter = loadImage("Bilder/runenMitte.svg");
+
+
   soundFormats('mp3', 'ogg');
   //http://soundbible.com/tags-fireball.html
   soundFireball = loadSound('Musik/Flame Arrow-SoundBible.com-618067908.mp3');
@@ -64,6 +67,8 @@ function setup() {
   enemyFireball.loadPixels();
   roomRectangle.loadPixels();
   scrollTrippleFireball.loadPixels();
+  runeMaxMana.loadPixels();
+  //runenCenter.loadPixels();
 }
 
 window.addEventListener("resize", function() {

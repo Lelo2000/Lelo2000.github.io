@@ -6,11 +6,15 @@ let bullets = [];
 let time = 0;
 let inventoryPos =[width/2 + 300,height/2-200];
 let skillbarPos =[width/2 -120,height/2+225];
+let runenPos = [width/2-120,height/2];
 let menueNow = {};
 let menueHistory = [];
-let Skill = function(name,type,mana,cooldown,img){
-  this.damage = 0;
-  this.mana = mana;
+let mouseDrag = [];
+
+
+let Skill = function(name,type,damage,cooldown,img){
+  this.damage = damage;
+  this.mana = 0;
   this.type= type;
   this.cooldown= cooldown;
   this.cooldownTimer= 0;
@@ -19,12 +23,12 @@ let Skill = function(name,type,mana,cooldown,img){
   this.flavorText="";
   this.key= 0;
   this.isInstant = false;
+  this.startDamage = damage;
 };
 Skill.prototype.action = function(){
 };
 let Fireball = function(){
-  Skill.call(this,"Feuerball",0,0,10,[fireball_skillbar]);
-  this.damage = 10;
+  Skill.call(this,"Feuerball",0,10,10,[fireball_skillbar]);
   this.flavorText="Ein mächtiger Feuerball der deine Gegner zerschmettert";
 };
 Fireball.prototype = Object.create(Skill.prototype);
@@ -35,8 +39,7 @@ Fireball.prototype.action = function(){
   bullets.push(new Fireballbullet(bulletX,bulletY,a,0,this.damage));
 };
 let TripleFireball = function(){
-  Skill.call(this,"Dreifach Feuerball",1,0,15,[trippelFireball_skillbar]);
-  this.damage = 10;
+  Skill.call(this,"Dreifach Feuerball",1,10,15,[trippelFireball_skillbar]);
   this.flavorText = "Drei kleinere Feuerbälle, um mehrere Gegner gleichzeitig zu besiegen";
 }
 TripleFireball.prototype = Object.create(Skill.prototype);
@@ -50,8 +53,9 @@ TripleFireball.prototype.action = function(){
 };
 
 let MageShield = function(){
-  Skill.call(this,"Magisches Schild",2,1,0,[magicShield_Skillbar]);
-  this.flavorText= "Schützte dich mit einem Magischen Schild, der Angriffe abwehrt.",
+  Skill.call(this,"Magisches Schild",2,0,0,[magicShield_Skillbar]);
+  this.flavorText= "Schützte dich mit einem Magischen Schild, der Angriffe abwehrt.";
+  this.mana = 1;
   this.isInstant = true;
 }
 MageShield.prototype = Object.create(Skill.prototype);
@@ -298,7 +302,6 @@ let ButtonBack = function(x,y){
 }
 ButtonBack.prototype = Object.create(Button.prototype);
 ButtonBack.prototype.action = function(){
-  console.log(menueHistory);
   switchMenue(menueHistory[menueHistory.length-2]);
 }
 let Door = function(x,y,direction,type){
@@ -345,8 +348,8 @@ let Room = function(x,y,type){
         this.sizeX= 469;
         this.sizeY= 430;
         this.shape= 1;
-        this.itemCount = rndInt(1);
-        this.itemType = [0];
+        this.itemCount = 20;
+        this.itemType = [1,0];
         this.enemyCount = 0;
         this.enemyType = [1];
         this.startPoint= [width/2, height/2];
@@ -463,6 +466,7 @@ Room.prototype.rndPositionInRoom = function(size){
     return [x,y];
 }
 
+
 let Item = function(x,y,name,type){
   Obj.call(this);
   this.x = x;
@@ -482,6 +486,7 @@ let HealingPotion = function (x,y){
 HealingPotion.prototype = Object.create(Item.prototype);
 HealingPotion.prototype.action = function(){
   player.hp = player.hp + 15;
+  this.isUsed = true;
 };
 let HealingBlob = function(x,y){
   Item.call(this,x,y,"Healing Blob",-1);
@@ -511,6 +516,31 @@ ScrollTrippleFireball.prototype.action= function(){
   }
 };
 
+let Rune = function(x,y,name){
+  Item.call(this,x,y,name,1);
+  this.sizeX = 40;
+  this.damage = 0;
+  this.maxMana = 0;
+  this.manaRegen = 0;
+  this.lifeRegen = 0;
+  this.cooldownReduction = 0;
+}
+Rune.prototype = Object.create(Item.prototype);
+Rune.prototype.action = function(){
+  player.runeBonus.damage += this.damage;
+  player.runeBonus.maxMana += this.maxMana;
+  player.runeBonus.manaRegen += this.manaRegen;
+  player.runeBonus.liveRegen += this.lifeRegen;
+  player.runeBonus.cooldownReduction += this.cooldownReduction;
+}
+
+let RuneMaxMana = function (x,y){
+  Rune.call(this,x,y,"Mana Rune");
+  this.maxMana = 40;
+  this.img = [runeMaxMana];
+}
+RuneMaxMana.prototype = Object.create(Rune.prototype);
+
 let LivingObject= function(maxHp) {
   Obj.call(this);
   this.speed= 0;
@@ -526,6 +556,8 @@ LivingObject.prototype.move = function(rot){
   this.y = this.y + sin(rot) * this.speed;
 };
 
+
+
 let Player = function (){
   LivingObject.call(this,40);
   this.sizeX = 60;
@@ -535,9 +567,11 @@ let Player = function (){
 
   this.xMap = 0;
   this.yMap = 0;
-  this.maxMana = 40;
+  this.startMana = 40;
+  this.maxMana = this.startMana;
   this.mana = this.maxMana;
-  this.manaRegen = 2;
+  this.startManaRegen = 2;
+  this.manaRegen = this.startManaRegen;
   this.manaRegenTime = 15;
   this.invincibleTime = 0;
   this.skill = 0;
@@ -545,6 +579,9 @@ let Player = function (){
   this.inventory = [];
   this.keyListStandardSkill = [49,50,51,52];
   this.keyListMovement = [87,65,83,68];
+  //Runen Bonus   
+  //this.runeBonus = {damage: 0, maxMana:0,manaRegen:0,lifeRegen:0,cooldownReduction:0};
+  this.runes = [];
 };
 Player.prototype = Object.create(LivingObject.prototype);
 Player.prototype.controll = function (){
@@ -580,23 +617,7 @@ Player.prototype.controll = function (){
   if(this.hp> this.maxHp){
     this.hp = this.maxHp;
   }
-  //AngriffsAuswahl
-  // if(this.skills.length >= 1)
-  //   if (keyIsDown(this.skills[0].key)) {
-  //     this.skill= 0;
-  //   }
-  // if(this.skills.length >= 2)
-  // if (keyIsDown(this.skills[1].key)) {
-  //   this.skill = 1;
-  // }
-  // if(this.skills.length >= 3)
-  //   if(keyIsDown(this.skills[2].key)){
-  //    this.skill = 2;
-  //  }
-  // if(this.skills.length >= 4)
-  //  if(keyIsDown(this.skills[3].key)){
-  //    this.skill = 3;
-  //  }
+
   for(let i = 0; i< this.skills.length; i++){
     if(keyIsDown(this.skills[i].key)){
       if(this.skills[i].isInstant){
@@ -654,7 +675,6 @@ Player.prototype.collision = function(){
     if(colObjObj(this,room.items[i])){
       if(room.items[i].instantConsumable === false){
         this.inventory.push(room.items[i]);
-        console.log(this.inventory);
         room.items.splice(i,1);
       }else{
         room.items[i].action();
@@ -726,6 +746,10 @@ Player.prototype.drawStats = function(){
 Player.prototype.drawInventory = function(){
   let ix = 0;
   let iy = 0;
+  push();
+  noFill();
+  rect(inventoryPos[0],inventoryPos[1],250,500)
+  pop();
   for(let i  in this.inventory){
       image(this.inventory[i].img[0],inventoryPos[0]+ix*50,inventoryPos[1] +50*iy,50,50);
       ix++;
@@ -733,6 +757,11 @@ Player.prototype.drawInventory = function(){
         iy++;
         ix = 0;
       }
+  }
+}
+Player.prototype.drawRunes = function(){
+  for(let i in this.runes){
+    image(this.runes[i].img[0],100,100,50,50);
   }
 }
 Player.prototype.drawSkillbarHover = function(){
@@ -762,6 +791,12 @@ Player.prototype.drawHud = function(){
   this.drawSkillbar();
   this.drawStats();
   this.drawSkillbarHover();
+  this.drawRunes();
+  push();
+  text("M: Map   Strg: Items im inventar bewegen",width/2-400,height/2+250);
+  imageMode(CENTER);
+  //image(runenCenter,runenPos[0],runenPos[1],50,50);
+  pop();
 };
 Player.prototype.animations = function(){
   if(this.animationTimer> 0){
@@ -787,6 +822,17 @@ Player.prototype.searchSkill = function(t){
     }
   }
   return -1;
+}
+Player.prototype.getRuneBonuses = function(){
+  this.runeBonus = {damage: 0, maxMana:0,manaRegen:0,lifeRegen:0,cooldownReduction:0};
+  for(let i in this.runes){
+    this.runes[i].action();
+  }
+  this.maxMana = this.startMana + this.runeBonus.maxMana;
+  this.manaRegen = this.startManaRegen + this.runeBonus.manaRegen;
+  for(let j in this.skills){
+    this.skills[j].damage = this.skills[j].startDamage + this.runeBonus.damage;
+  }
 }
 
 let Bullet = function(x,y,a,type,maxHp,img,size,speed,damage){
@@ -993,6 +1039,7 @@ function draw(){
     player.drawHud();
     bulletHandler();
   }
+  mouseDragUpdate();
   time++;
 }
 function switchMenue(type){
@@ -1028,6 +1075,7 @@ function bulletHandler(){
   }
 }
 function playerManager(){
+  player.getRuneBonuses();
   player.controll();
   player.collision();
 }
@@ -1150,8 +1198,8 @@ function mapGeneration(){
       map.push(new Room(x,y,rndType));
       }
   }
-  console.log(map);
 }
+//Enemy und Item listen
 function getEnemyFromType(type,x,y){
   switch(type){
     case 0:
@@ -1170,17 +1218,42 @@ function getItemFromType(type,x,y){
     case 0:
       return new HealingPotion(x,y);
     break;
+    case 1:
+      return new RuneMaxMana(x,y);
+    break;
   }
 }
-
+//Drag and Drop
+function mouseDragUpdate(){
+  if(mouseDrag.length != 0){
+    mouseDrag[0].x = mouseX;
+    mouseDrag[0].y = mouseY;
+    mouseDrag[0].draw();
+  }
+}
 function mousePressed(){
   if(menueNow.type === 0){
     let i = getMouseInventoryClick();
     if(i > -1){
-      if(player.inventory[i] != null){
-        player.inventory[i].action();
-        player.inventory.splice(i,1);
-      }   
+      if(mouseDrag.length != 0){
+        if(player.inventory[i] === undefined){
+          player.inventory.push(mouseDrag[0]);
+        }else{
+          player.inventory.splice(i,0,mouseDrag[0]);
+        }
+      mouseDrag.splice(0,1);
+      }else{
+        if(player.inventory[i] != undefined){
+          if(player.inventory[i].type != 1 && (keyIsDown(17) === false || keyIsDown(17) === undefined)){
+            player.inventory[i].action();
+          }else{
+            mouseDrag.push(player.inventory[i]);
+            player.inventory[i].isUsed = true;
+          }
+          if(player.inventory[i].isUsed)
+            player.inventory.splice(i,1);
+        }   
+      }
     }
   }
   for(let i in menueNow.buttons){
