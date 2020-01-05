@@ -235,6 +235,9 @@ Obj.prototype.action = function (){
   console.log("Hey ich bin"+this);
 }
 
+
+
+
 let Button = function (x,y){
   Obj.call(this);
   this.x = x;
@@ -321,12 +324,13 @@ let ButtonRuneSwitch = function (x,y,id){
 ButtonRuneSwitch.prototype = Object.create(Button.prototype);
 ButtonRuneSwitch.prototype.action = function(){
   if(mouseDrag.length >0){
-    if(mouseDrag[0].type ===1){
+    if(mouseDrag[0].isRune){
       this.hover();
       this.rune[0] = mouseDrag[0].img;
       this.rune[1] = mouseDrag[0].rot;
       if(player.runes[this.id] === undefined){
         player.runes[this.id] = mouseDrag[0];
+        mouseDrag.splice(0,1);
       }else{
         let zwischenablage = mouseDrag[0];
         mouseDrag[0] = player.runes[this.id];
@@ -347,28 +351,30 @@ ButtonRuneSwitch.prototype.draw = function (){
 }
 ButtonRuneSwitch.prototype.hover = function(){
   if(mouseDrag.length > 0){
-    switch(this.id){
-      case 1:
-        mouseDrag[0].rot = PI/4; 
-      break;
-      case 2:
-        mouseDrag[0].rot = PI/2; 
-      break;
-      case 3:
-        mouseDrag[0].rot = PI*3/4; 
-      break;
-      case 4:
-        mouseDrag[0].rot = -PI; 
-      break;
-      case 5:
-        mouseDrag[0].rot = -PI*3/4; 
-      break;
-      case 6:
-        mouseDrag[0].rot = -PI/2; 
-      break;
-      case 7:
-        mouseDrag[0].rot = -PI*1/4; 
-      break;
+    if(mouseDrag[0].isRune){
+      switch(this.id){
+        case 1:
+          mouseDrag[0].rot = PI/4; 
+        break;
+        case 2:
+          mouseDrag[0].rot = PI/2; 
+        break;
+        case 3:
+          mouseDrag[0].rot = PI*3/4; 
+        break;
+        case 4:
+          mouseDrag[0].rot = -PI; 
+        break;
+        case 5:
+          mouseDrag[0].rot = -PI*3/4; 
+        break;
+        case 6:
+          mouseDrag[0].rot = -PI/2; 
+        break;
+        case 7:
+          mouseDrag[0].rot = -PI*1/4; 
+        break;
+    }
     }
   }
 }
@@ -383,6 +389,10 @@ ButtonBack.prototype = Object.create(Button.prototype);
 ButtonBack.prototype.action = function(){
   switchMenue(menueHistory[menueHistory.length-2]);
 }
+
+
+
+
 let Door = function(x,y,direction,type){
   Obj.call(this);
   this.x = x;
@@ -402,6 +412,8 @@ Door.prototype.open = function (bool){
   if(bool)
     this.skin = 1;
 };
+
+
 
 
 let Room = function(x,y,type){
@@ -428,7 +440,7 @@ let Room = function(x,y,type){
         this.sizeY= 430;
         this.shape= 1;
         this.itemCount = 20;
-        this.itemType = [1,0];
+        this.itemType = [1,0,2];
         this.enemyCount = 0;
         this.enemyType = [1];
         this.startPoint= [width/2, height/2];
@@ -546,6 +558,8 @@ Room.prototype.rndPositionInRoom = function(size){
 }
 
 
+
+
 let Item = function(x,y,name,type){
   Obj.call(this);
   this.x = x;
@@ -554,6 +568,7 @@ let Item = function(x,y,name,type){
   this.instantConsumable = false;
   this.isUsed = false;
   this.name = name;
+  this.isRune = false;
 }
 Item.prototype = Object.create(Obj.prototype);
 
@@ -595,12 +610,16 @@ ScrollTrippleFireball.prototype.action= function(){
   }
 };
 
-let Rune = function(x,y,name){
-  Item.call(this,x,y,name,1);
+
+
+let Rune = function(x,y,name,type){
+  Item.call(this,x,y,name,type);
   this.sizeX = 40;
+  this.isRune = true;
   this.damage = 0;
   this.maxMana = 0;
   this.manaRegen = 0;
+  this.maxHp = 0;
   this.lifeRegen = 0;
   this.cooldownReduction = 0;
 }
@@ -611,14 +630,24 @@ Rune.prototype.action = function(){
   player.runeBonus.manaRegen += this.manaRegen;
   player.runeBonus.liveRegen += this.lifeRegen;
   player.runeBonus.cooldownReduction += this.cooldownReduction;
+  player.runeBonus.maxHp += this.maxHp;
 }
 
 let RuneMaxMana = function (x,y){
-  Rune.call(this,x,y,"Mana Rune");
+  Rune.call(this,x,y,"Manarune",1);
   this.maxMana = 40;
   this.img = [runeMaxMana];
 }
 RuneMaxMana.prototype = Object.create(Rune.prototype);
+
+let RuneMaxHp = function(x,y){
+  Rune.call(this,x,y,"Lebensrune",2);
+  this.maxHp = 20;
+  this.img = [runeMaxHp];
+}
+RuneMaxHp.prototype = Object.create(Rune.prototype);
+
+
 
 let LivingObject= function(maxHp) {
   Obj.call(this);
@@ -638,7 +667,8 @@ LivingObject.prototype.move = function(rot){
 
 
 let Player = function (){
-  LivingObject.call(this,40);
+  this.startHp = 40;
+  LivingObject.call(this,this.startHp);
   this.sizeX = 60;
   this.sizeY = 60;
   this.speed = 7;
@@ -842,23 +872,6 @@ Player.prototype.drawRunes = function(){
   push();
   imageMode(CENTER);
   image(runenCenter,runenPos[0],runenPos[1],100,100);
-  // noFill();
-  // //Oben
-  // rect(runenPos[0]-20,runenPos[1]-90,40,40);
-  // //Schräg oben Rechts
-  // rect(runenPos[0]+28,runenPos[1]-68,40,40);
-  // // Mitte Rechts
-  // rect(runenPos[0]+50,runenPos[1]-20,40,40);
-  // //Schräg unte Rechts
-  // rect(runenPos[0]+28,runenPos[1]+29,40,40);
-  // //Unten
-  // rect(runenPos[0]-20,runenPos[1]+50,40,40);
-  // //Schräg oben Links
-  // rect(runenPos[0]-72,runenPos[1]-68,40,40);
-  // // Mitte Links
-  // rect(runenPos[0]-90,runenPos[1]-20,40,40);
-  // //Schräg unte Link
-  // rect(runenPos[0]-72,runenPos[1]+29,40,40);
   pop();
 }
 Player.prototype.drawSkillbarHover = function(){
@@ -918,12 +931,13 @@ Player.prototype.searchSkill = function(t){
   return -1;
 }
 Player.prototype.getRuneBonuses = function(){
-  this.runeBonus = {damage: 0, maxMana:0,manaRegen:0,lifeRegen:0,cooldownReduction:0};
+  this.runeBonus = {damage: 0, maxMana:0,manaRegen:0,lifeRegen:0,cooldownReduction:0,maxHp: 0};
   for(let i in this.runes){
     this.runes[i].action();
   }
   this.maxMana = this.startMana + this.runeBonus.maxMana;
   this.manaRegen = this.startManaRegen + this.runeBonus.manaRegen;
+  this.maxHp = this.startHp+this.runeBonus.maxHp;
   for(let j in this.skills){
     this.skills[j].damage = this.skills[j].startDamage + this.runeBonus.damage;
   }
@@ -1315,6 +1329,9 @@ function getItemFromType(type,x,y){
     case 1:
       return new RuneMaxMana(x,y);
     break;
+    case 2:
+      return new RuneMaxHp(x,y);
+    break;
   }
 }
 //Drag and Drop
@@ -1339,7 +1356,7 @@ function mousePressed(){
       mouseDrag.splice(0,1);
       }else{
         if(player.inventory[i] != undefined){
-          if(player.inventory[i].type != 1 && (keyIsDown(17) === false || keyIsDown(17) === undefined)){
+          if(player.inventory[i].isRune===false && (keyIsDown(17) === false || keyIsDown(17) === undefined)){
             player.inventory[i].action();
           }else{
             mouseDrag.push(player.inventory[i]);

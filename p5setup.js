@@ -31,7 +31,7 @@ function preload(){
   magicShield_Skillbar = loadImage("Bilder/MagicShield_Skillbar.svg");
   runeMaxMana = loadImage("Bilder/runeMana.svg");
   runenCenter = loadImage("Bilder/runenMitte.svg");
-
+  runeMaxHp = loadImage("Bilder/runeMaxHp.svg");
 
   soundFormats('mp3', 'ogg');
   //http://soundbible.com/tags-fireball.html
@@ -69,6 +69,7 @@ function setup() {
   scrollTrippleFireball.loadPixels();
   runeMaxMana.loadPixels();
   //runenCenter.loadPixels();
+  runeMaxHp.loadPixels();
 }
 
 window.addEventListener("resize", function() {
