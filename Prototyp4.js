@@ -10,7 +10,26 @@ let runenPos = [width/2-400,height/2-150];
 let menueNow = {};
 let menueHistory = [];
 let mouseDrag = [];
-
+const Types = Object.freeze({
+  Item: Object.freeze({
+    ScrollTrippleFireball:-2,
+    HealingBlob:-1,
+    HealingPotion:0,
+    RuneMaxMana:1,
+    RuneMaxHP:2
+  }),
+  Enemy: Object.freeze({
+    SlimeKing:-1,
+    Slime:0,
+    FireMage:1,
+  }),
+  Menue: Object.freeze({
+    Start: 1,
+    InGame:0,
+    Pause: 2,
+    Optionen:3
+  })
+})
 
 let Skill = function(name,type,damage,cooldown,img){
   this.damage = damage;
@@ -79,14 +98,14 @@ Menue.prototype.update = function (){
   }
 }
 let MenueStart = function(){
-  Menue.call(this,1);
+  Menue.call(this,Types.Menue.Start);
   this.buttons.push(new ButtonStart(width/2,height/2));
   this.buttons.push(new ButtonOptionen(width/2,height/2+60));
 }
 MenueStart.prototype = Object.create(Menue.prototype);
 
 let MenueInGame = function(){
-  Menue.call(this,0);
+  Menue.call(this,Types.Menue.InGame);
   this.buttons.push(new ButtonPause(inventoryPos[0]+45,inventoryPos[1]-30));
   //Runenbuttons: Oben
   this.buttons.push(new ButtonRuneSwitch(runenPos[0],runenPos[1]-70,0));
@@ -108,7 +127,7 @@ let MenueInGame = function(){
 MenueInGame.prototype = Object.create(Menue.prototype);
 
 let MenuePause = function(){
-  Menue.call(this,2);
+  Menue.call(this,Types.Menue.Pause);
   this.buttons.push(new ButtonWeiter(width/2+60,height/2));
   this.buttons.push(new ButtonOptionen(width/2-60,height/2));
 }
@@ -143,7 +162,7 @@ MenuePause.prototype.update = function(){
 }
 
 let MenueOptionen = function(){
-  Menue.call(this,3);
+  Menue.call(this,Types.Menue.Optionen);
   this.state =0;
   this.activeButton = -1;
 }
@@ -264,7 +283,7 @@ let ButtonStart = function(x,y){
 }
 ButtonStart.prototype = Object.create(Button.prototype);
 ButtonStart.prototype.action = function (){
-  switchMenue(0);
+  switchMenue(Types.Menue.InGame);
 }
 
 let ButtonPause = function(x,y){
@@ -275,7 +294,7 @@ let ButtonPause = function(x,y){
 }
 ButtonPause.prototype = Object.create(Button.prototype);
 ButtonPause.prototype.action = function (){
-  switchMenue(2);
+  switchMenue(Types.Menue.Pause);
 }
 let ButtonWeiter = function(x,y){
   Button.call(this,x,y);
@@ -285,7 +304,7 @@ let ButtonWeiter = function(x,y){
 }
 ButtonWeiter.prototype = Object.create(Button.prototype);
 ButtonWeiter.prototype.action = function(){
-  switchMenue(0);
+  switchMenue(Types.Menue.InGame);
 }
 
 let ButtonOptionen = function(x,y){
@@ -296,7 +315,7 @@ let ButtonOptionen = function(x,y){
 }
 ButtonOptionen.prototype = Object.create(Button.prototype);
 ButtonOptionen.prototype.action = function(){
-  switchMenue(3);
+  switchMenue(Types.Menue.Optionen);
 }
 
 let ButtonOptionenTastenauswahl = function(x,y){
@@ -443,20 +462,23 @@ let Room = function(x,y,type){
   this.deadEnemys = [];
   this.doors = [];
   switch (type) {
-    case -1:
+    case -2:
         this.sizeX= 469;
         this.sizeY= 430;
         this.shape= 1;
-        this.itemCount = 20;
-        this.itemType = [1,0,2];
+        this.itemCount = rndInt(1);
+        this.itemType = [0];
         this.enemyCount = 0;
-        this.enemyType = [1];
+        this.enemyType = [];
         this.startPoint= [width/2, height/2];
         this.img = [roomRectangle];
       break;
-    case -2:
-        this.sizeX= 300;
-        this.sizeY= 300;
+    case -1:
+        this.sizeX= 580;
+        this.sizeY= 400;
+        this.enemyCount = 1;
+        this.enemyType= [Types.Enemy.SlimeKing];
+        this.startPoint= [width/2, height/2];
         this.shape= 1;
         this.img = [roomRectangle];
       break;
@@ -473,7 +495,7 @@ let Room = function(x,y,type){
       break;
     case 1:
         this.enemyCount= rndInt(3);
-        this.enemyType= [0];
+        this.enemyType= [Types.Enemy.Slime];
         this.sizeX= 500;
         this.sizeY= 360;
         this.shape= 1;
@@ -487,10 +509,15 @@ Room.prototype.generation = function (){
       this.setDoors();
     while(this.enemys.length + this.deadEnemys.length < this.enemyCount ){
       let enType = random(this.enemyType);
-      let en = getEnemyFromType(enType,0,0);
-      let pos = this.rndPositionInRoom(en.sizeX); 
-      en.x = pos[0];
-      en.y = pos[1];
+      let en = {};
+      if(enType >= 0){
+        en = getEnemyFromType(enType,0,0);
+        let pos = this.rndPositionInRoom(en.sizeX); 
+        en.x = pos[0];
+        en.y = pos[1];
+      }else{
+        en = getEnemyFromType(enType,width/2,height/2);
+      }
       this.enemys.push(en);  
     }
     if(this.isVisited === false){
@@ -579,9 +606,23 @@ let Item = function(x,y,name,type){
   this.isRune = false;
 }
 Item.prototype = Object.create(Obj.prototype);
-
+Item.prototype.hover = function (){
+  if(colPointObj(mouseX,mouseY,this)){
+    this.drawHover();
+  }
+}
+Item.prototype.drawHover= function (){
+  push();
+  fill(200);
+  noStroke();
+  rect(mouseX,mouseY-11,this.name.length*6.5,14);
+  fill(0);
+  text(this.name,mouseX,mouseY);
+  console.log(this.name.length);
+  pop();
+}
 let HealingPotion = function (x,y){
-  Item.call(this,x,y,"Heiltrank",0);
+  Item.call(this,x,y,"Heiltrank",Types.Item.HealingPotion);
   this.sizeX = 30;
   this.img = [healingPotion];
 };
@@ -592,7 +633,7 @@ HealingPotion.prototype.action = function(){
 };
 
 let HealingBlob = function(x,y){
-  Item.call(this,x,y,"Healing Blob",-1);
+  Item.call(this,x,y,"Healing Blob",Types.Item.HealingBlob);
   this.sizeX= 8;
   this.img = [lifeItem];
   this.instantConsumable = true;
@@ -607,7 +648,7 @@ HealingBlob.prototype.action = function (){
 };
 
 let ScrollTrippleFireball = function(x,y){
-  Item.call(this,x,y,"Schriftrolle Dreifach Feuerball",-2);
+  Item.call(this,x,y,"Schriftrolle Dreifach Feuerball",Types.Item.ScrollTrippleFireball);
   this.sizeX = 40;
   this.img = [scrollTrippleFireball];
   this.instantConsumable = true;
@@ -624,7 +665,7 @@ ScrollTrippleFireball.prototype.action= function(){
 
 let Rune = function(x,y,name,type){
   Item.call(this,x,y,name,type);
-  this.sizeX = 40;
+  this.sizeX = 17;
   this.isRune = true;
   this.damage = 0;
   this.maxMana = 0;
@@ -644,18 +685,19 @@ Rune.prototype.action = function(){
 }
 
 let RuneMaxMana = function (x,y){
-  Rune.call(this,x,y,"Manarune",1);
+  Rune.call(this,x,y,"Manarune",Types.Item.RuneMaxMana);
   this.maxMana = 40;
   this.img = [runeMaxMana];
 }
 RuneMaxMana.prototype = Object.create(Rune.prototype);
 
 let RuneMaxHp = function(x,y){
-  Rune.call(this,x,y,"Lebensrune",2);
+  Rune.call(this,x,y,"Lebensrune",Types.Item.RuneMaxHP);
   this.maxHp = 20;
   this.img = [runeMaxHp];
 }
 RuneMaxHp.prototype = Object.create(Rune.prototype);
+
 
 
 
@@ -673,6 +715,7 @@ LivingObject.prototype.move = function(rot){
   this.x = this.x + cos(rot) * this.speed;
   this.y = this.y + sin(rot) * this.speed;
 };
+
 
 
 
@@ -793,8 +836,10 @@ Player.prototype.collision = function(){
   for(let i in room.items){
     if(colObjObj(this,room.items[i])){
       if(room.items[i].instantConsumable === false){
-        this.inventory.push(room.items[i]);
-        room.items.splice(i,1);
+        if(this.inventory.length < 25){
+          this.inventory.push(room.items[i]);
+          room.items.splice(i,1);
+        }
       }else{
         room.items[i].action();
         if(room.items[i].isUsed)
@@ -867,15 +912,27 @@ Player.prototype.drawInventory = function(){
   let iy = 0;
   push();
   noFill();
-  rect(inventoryPos[0],inventoryPos[1],250,500)
+  rect(inventoryPos[0],inventoryPos[1],250,250)
   pop();
   for(let i  in this.inventory){
-      image(this.inventory[i].img[0],inventoryPos[0]+ix*50,inventoryPos[1] +50*iy,50,50);
-      ix++;
-      if(ix >= 5){
-        iy++;
-        ix = 0;
-      }
+    image(this.inventory[i].img[0],inventoryPos[0]+ix*50,inventoryPos[1] +50*iy,50,50);
+    ix++;
+    if(ix >= 5){
+      iy++;
+      ix = 0;
+    }
+  }
+  ix = 0;
+  iy = 0;
+  for(let i in this.inventory){
+    if(colPointBox(mouseX,mouseY,inventoryPos[0]+ix*50,inventoryPos[1] +50*iy,50,50)){
+      this.inventory[i].drawHover();
+    }
+    ix++;
+    if(ix >= 5){
+      iy++;
+      ix = 0;
+    }
   }
 }
 Player.prototype.drawRunes = function(){
@@ -912,7 +969,7 @@ Player.prototype.drawHud = function(){
   this.drawStats();
   this.drawSkillbarHover();
   this.drawRunes();
-  text("M: Map   Strg: Items im inventar bewegen",width/2-400,height/2+250);
+  text("M: Map   Strg: Items im inventar bewegen",width/2+300,height/2+70);
 
 };
 Player.prototype.animations = function(){
@@ -953,6 +1010,10 @@ Player.prototype.getRuneBonuses = function(){
   }
 }
 
+
+
+
+
 let Bullet = function(x,y,a,type,maxHp,img,size,speed,damage){
   LivingObject.call(this, maxHp);
   this.x = x;
@@ -965,9 +1026,12 @@ let Bullet = function(x,y,a,type,maxHp,img,size,speed,damage){
   this.shape = 1;
   this.speed = speed;
   this.damage = damage;
+  this.deletion = false;
 }
 Bullet.prototype = Object.create(LivingObject.prototype);
-
+Bullet.prototype.onHitWall = function(){
+  this.deletion = true;
+}
 let Fireballbullet = function (x,y,a,type,damage){
   Bullet.call(this,x,y,a,type,1,[],12,12,damage);
   if(type === 0){
@@ -977,6 +1041,22 @@ let Fireballbullet = function (x,y,a,type,damage){
   }
 }
 Fireballbullet.prototype = Object.create(Bullet.prototype);
+
+let BulletSlimeKing = function (x,y,a,damage){
+  Bullet.call(this,x,y,a,-2,1,[bulletSlimeKing],20,8,damage);
+}
+
+BulletSlimeKing.prototype = Object.create(Bullet.prototype);
+BulletSlimeKing.prototype.onHitWall = function(){
+  if(rndOutcome(30)){
+    room.enemys.push(new Slime(this.x,this.y,3));
+  }
+  this.deletion = true;
+}
+
+
+
+
 
 let Enemy = function(maxHp,type){
   LivingObject.call(this,maxHp);
@@ -1060,7 +1140,7 @@ Enemy.prototype.animations = function(){
 }
 
 let Slime = function(x,y,bigness){
-  Enemy.call(this,bigness*5,0);
+  Enemy.call(this,bigness*5,Types.Enemy.Slime);
   this.x = x;
   this.y = y;
   this.speed = 8-bigness;
@@ -1075,8 +1155,8 @@ Slime.prototype.action= function (){
 }
 Slime.prototype.onDeath= function(){
   //Teilung in 2 Schleims
-  if(this.bigness>2){
-    this.bigness--;
+  this.bigness--;
+  if(this.bigness>1){
     room.enemys.push(new Slime(this.x-random(-8,8),this.y-random(-8,8),this.bigness));
     room.enemys.push(new Slime(this.x-random(-8,8),this.y-random(-8,8),this.bigness));
   }  
@@ -1084,9 +1164,16 @@ Slime.prototype.onDeath= function(){
   if(rndOutcome(5)){
     room.items.push(new HealingBlob(this.x,this.y));
   }
+  if(this.bigness === 1){
+    if(rndOutcome(2)){
+      let rnd = rndInt(1);
+      rnd++;
+      room.items.push(getItemFromType(rnd,this.x+random(-this.sizeX,this.sizeX),this.y+random(-this.sizeX,this.sizeX)));
+    }
+  }
 }
 let fireMage = function(x,y){
-  Enemy.call(this,240,1)
+  Enemy.call(this,240,Types.Enemy.FireMage);
   this.x = x;
   this.y = y; 
   this.sizeX = 50;
@@ -1126,6 +1213,46 @@ fireMage.prototype.onDeath= function(){
   }
 }
 
+let SlimeKing = function(x,y){
+  Enemy.call(this,1240,Types.Enemy.SlimeKing);
+  this.x = x;
+  this.y = y; 
+  this.sizeX = 200;
+  this.speed = 0;
+  this.aSpeed = 15;
+  this.img = [slimeKing,slimeKing,slimeKing,slimeKingAttack];
+}
+
+SlimeKing.prototype = Object.create(Enemy.prototype);
+SlimeKing.prototype.drawLifebar = function (){
+  push();
+  fill("red");
+  rect(width/2-250,height/2-215,500,10);
+  let t = 500 / this.maxHp;
+  fill("green")
+  rect(width/2-250,height/2-215,t*this.hp,10);
+  pop();
+}
+SlimeKing.prototype.action = function (){
+    this.rot = getAngelBetweenPoint(this.x,this.y,player.x,player.y);
+    let bulletX = this.x+75*cos(this.rot-0);
+    let bulletY = this.y+75*sin(this.rot-0);
+    if(this.aTime <= 6){
+      this.animationTimer = 6;
+      this.animation = 1;
+      push();
+      pop();
+    }
+    if(this.aTime <= 0){
+  
+    bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot,5));
+  
+    this.aTime = this.aSpeed;
+    }else{
+      this.aTime--;
+    }
+}
+
 
 let start = true;
 let player = {};
@@ -1151,6 +1278,7 @@ function draw(){
     playerManager();
     for(let j in room.items){
       room.items[j].draw();
+      room.items[j].hover();
     }
     player.animations();
     player.draw();
@@ -1162,16 +1290,16 @@ function draw(){
 }
 function switchMenue(type){
   switch(type){
-    case 0:
+    case Types.Menue.InGame:
       menueNow = new MenueInGame();
     break;
-    case 1:
+    case Types.Menue.Start:
       menueNow = new MenueStart();
     break;
-    case 2:
+    case Types.Menue.Pause:
       menueNow = new MenuePause();
     break;
-    case 3:
+    case Types.Menue.Optionen:
       menueNow = new MenueOptionen();
     break;
   }
@@ -1187,8 +1315,9 @@ function bulletHandler(){
     inRoom(bullets[i].x - bullets[i].sizeX/2, bullets[i].y) === false ||
     inRoom(bullets[i].x, bullets[i].y+ bullets[i].sizeY/2) === false ||
     inRoom(bullets[i].x, bullets[i].y- bullets[i].sizeY/2) === false ) {
-     
-      bullets.splice(i, 1);
+      bullets[i].onHitWall();
+      if(bullets[i].deletion)
+        bullets.splice(i, 1);
     }  
   }
 }
@@ -1247,11 +1376,11 @@ function roomChange(direc){
     player.x = room.startPoint[0];
     player.y = room.startPoint[1];
   }
-  if(room.enemys.length <= 0){
+  //if(room.enemys.length <= 0){
       room.openDoors(true);
-    }else{
-      room.openDoors(false);
-    }
+    //}else{
+     // room.openDoors(false);
+    //}
   room.isVisited = true;
   //console.log("Raum Geändert");
 }
@@ -1320,26 +1449,29 @@ function mapGeneration(){
 //Enemy und Item listen
 function getEnemyFromType(type,x,y){
   switch(type){
-    case 0:
+    case Types.Enemy.Slime:
       return new Slime(x,y,4);
     break;
-    case 1:
+    case Types.Enemy.FireMage:
       return new fireMage(x,y) 
+    break;
+    case Types.Enemy.SlimeKing:
+      return new SlimeKing(x,y);
     break;
   }
 }
 function getItemFromType(type,x,y){
   switch(type){
-    case -2:
+    case Types.Item.ScrollTrippleFireball:
       return new ScrollTrippleFireball(x,y);
     break;
-    case 0:
+    case Types.Item.HealingPotion:
       return new HealingPotion(x,y);
     break;
-    case 1:
+    case Types.Item.RuneMaxMana:
       return new RuneMaxMana(x,y);
     break;
-    case 2:
+    case Types.Item.RuneMaxHP:
       return new RuneMaxHp(x,y);
     break;
   }
@@ -1349,6 +1481,7 @@ function mouseDragUpdate(){
   if(mouseDrag.length != 0){
     mouseDrag[0].x = mouseX;
     mouseDrag[0].y = mouseY;
+    mouseDrag[0].sizeX = 40;
     mouseDrag[0].draw();
     mouseDrag[0].rot = 0;
   }
@@ -1510,6 +1643,15 @@ function colPointObj(x,y,obj){
       return true;
     }
       return false;
+  }
+  if(obj.shape === 0){
+    let dx = abs(x - obj.x);
+    let dy = abs(y - obj.y);
+    let d = betrag([dx,dy]);
+    if(d<obj.sizeX){
+      return true;
+    }
+    return false;
   }
 }
 function colPointBox(x,y,bx,by,bsx,bsy){

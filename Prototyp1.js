@@ -517,3 +517,71 @@ function colPointBox(x,y,bx,by,bsx,bsy){
 function betrag(vektor) {
   return sqrt(sq(vektor[0]) + sq(vektor[1]));
 }
+
+
+
+
+
+
+
+
+Level = {
+  Seitens = [],
+}
+
+function CreateLevel (Level) {
+    createSeiten(0);
+    createSeiten(1);
+    createSeiten(2);
+    createSeiten(3);
+    createSeiten(4);
+}
+
+function spawnScrub(x,y){
+  let scrub = {
+    x,
+    y,
+    sx,
+    sy,
+    img,
+  }
+  Level.scrubs.push(scrub);
+}
+
+function drawScrubs(){
+  for(let in scrubs){
+    image(scubs[i].img,scrubs[i].x);
+  }
+}
+
+function createSeite(SeitenArt){
+  Seiten = {
+    scrubs=[],
+    Kastens = [],
+    enemys=[],
+  }
+  scrubs = [];
+  switch(Level){
+    case 0:
+      spawnScrubs(400,200);
+      spawnScrubs(100,200);
+      spawnScrubs(200,200);
+      spawnScrubs(300,200);
+    break;
+    case 1:
+      spawnScrubs(400,200);
+      spawnScrubs(100,200);
+      spawnScrubs(200,200);
+      spawnScrubs(300,200);
+    break;
+    case 2:
+      spawnScrubs(400,200);
+      spawnScrubs(100,200);
+      spawnScrubs(200,200);
+      spawnScrubs(300,200);
+    break;
+  }
+  Level.Seiten.push(Seiten)
+}
+
+

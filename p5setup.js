@@ -32,6 +32,9 @@ function preload(){
   runeMaxMana = loadImage("Bilder/runeMana.svg");
   runenCenter = loadImage("Bilder/runenMitte.svg");
   runeMaxHp = loadImage("Bilder/runeMaxHp.svg");
+  slimeKing = loadImage("Bilder/SlimeKing.png");
+  slimeKingAttack = loadImage("Bilder/SlimeKingAttack.png");
+  bulletSlimeKing = loadImage("Bilder/SlimeKingBullet.svg");
 
   soundFormats('mp3', 'ogg');
   //http://soundbible.com/tags-fireball.html
@@ -70,6 +73,9 @@ function setup() {
   runeMaxMana.loadPixels();
   //runenCenter.loadPixels();
   runeMaxHp.loadPixels();
+  slimeKing.loadPixels();
+  slimeKingAttack.loadPixels();
+
 }
 
 window.addEventListener("resize", function() {
