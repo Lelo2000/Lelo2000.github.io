@@ -10,6 +10,10 @@ let runenPos = [width/2-400,height/2-150];
 let menueNow = {};
 let menueHistory = [];
 let mouseDrag = [];
+
+
+
+
 const Types = Object.freeze({
   Item: Object.freeze({
     ScrollTrippleFireball:-2,
@@ -22,6 +26,7 @@ const Types = Object.freeze({
     SlimeKing:-1,
     Slime:0,
     FireMage:1,
+    SlimeArea:2,
   }),
   Menue: Object.freeze({
     Start: 1,
@@ -30,6 +35,10 @@ const Types = Object.freeze({
     Optionen:3
   })
 })
+
+
+
+
 
 let Skill = function(name,type,damage,cooldown,img){
   this.damage = damage;
@@ -218,6 +227,8 @@ MenueOptionen.prototype.update= function(){
 }
 
 
+
+
 let Obj = function(){
   this.x = 0;
   this.y = 0;
@@ -225,6 +236,10 @@ let Obj = function(){
   this.shape = 0;
   this.sizeX = 0;
   this.sizeY = 0;
+  this.offsetX = 0;
+  this.offsetY = 0;
+  this.offsetSizeX = 0;
+  this.offsetSizeY = 0;
   this.img = [];
   this.skin = 0;
   this.type = 0;
@@ -235,9 +250,9 @@ Obj.prototype.draw = function(){
   rotate(this.rot);
   imageMode(CENTER);
   if(this.shape === 0)
-    image(this.img[this.skin],0,0,this.sizeX,this.sizeX);
+    image(this.img[this.skin],this.offsetX,this.offsetY,this.sizeX+this.offsetSizeX,this.sizeX+this.offsetSizeX);
   if(this.shape === 1)
-    image(this.img[this.skin],0,0,this.sizeX,this.sizeY);
+    image(this.img[this.skin],this.offsetX,this.offsetY,this.sizeX+this.offsetSizeX,this.sizeY+this.offsetSizeY);
   
     if(drawHitbox){
     circle(0,0,4);
@@ -253,6 +268,7 @@ Obj.prototype.draw = function(){
 Obj.prototype.action = function (){
   console.log("Hey ich bin"+this);
 }
+
 
 
 
@@ -722,10 +738,14 @@ LivingObject.prototype.move = function(rot){
 let Player = function (){
   this.startHp = 40;
   LivingObject.call(this,this.startHp);
-  this.sizeX = 60;
-  this.sizeY = 60;
+  this.sizeX = 40;
+  this.startSpeed = 7;
   this.speed = 7;
   this.img = [mageFire, mageFire_shoot1];
+  this.shape = 0;
+  this.offsetSizeX = 20;
+  this.offsetX = 5;
+  this.offsetY = 0;
 
   this.xMap = 0;
   this.yMap = 0;
@@ -754,7 +774,7 @@ Player.prototype.controll = function (){
   }
   //Bewegung
   //w
-  if (keyIsDown(this.keyListMovement[0]) && inRoom(this.x,this.y-this.sizeY/2)) {
+  if (keyIsDown(this.keyListMovement[0]) && inRoom(this.x,this.y-this.sizeX/2)) {
     this.move(-HALF_PI);
   }
   //a
@@ -762,7 +782,7 @@ Player.prototype.controll = function (){
     this.move(PI);
   }
   //s
-  if (keyIsDown(this.keyListMovement[2])&& inRoom(this.x,this.y+this.sizeY/2)) {
+  if (keyIsDown(this.keyListMovement[2])&& inRoom(this.x,this.y+this.sizeX/2)) {
     this.move(HALF_PI);
   }
   //d
@@ -808,6 +828,7 @@ Player.prototype.controll = function (){
   }
 };
 Player.prototype.collision = function(){
+  this.speed = this.startSpeed;
   if(this.invincibleTime > 0)
     this.invincibleTime--;
   for(let i in room.doors){
@@ -860,7 +881,11 @@ Player.prototype.collision = function(){
     for(let i in room.enemys){
       if(colObjObj(this,room.enemys[i]) &&room.enemys[i].spawnTime <= 0){
         this.hp = this.hp-room.enemys[i].bodyDamage;
-        this.invincibleTime = 5;
+        if(room.enemys[i].bodyDamage > 0)
+          this.invincibleTime = 5;
+        if(room.enemys[i].type === Types.Enemy.SlimeArea){
+            this.speed = this.speed/5;
+        }
       }
     }
   }
@@ -1042,6 +1067,7 @@ let Fireballbullet = function (x,y,a,type,damage){
 }
 Fireballbullet.prototype = Object.create(Bullet.prototype);
 
+
 let BulletSlimeKing = function (x,y,a,damage){
   Bullet.call(this,x,y,a,-2,1,[bulletSlimeKing],20,8,damage);
 }
@@ -1049,7 +1075,7 @@ let BulletSlimeKing = function (x,y,a,damage){
 BulletSlimeKing.prototype = Object.create(Bullet.prototype);
 BulletSlimeKing.prototype.onHitWall = function(){
   if(rndOutcome(30)){
-    room.enemys.push(new Slime(this.x,this.y,3));
+    room.enemys.push(new Slime(this.x,this.y,1));
   }
   this.deletion = true;
 }
@@ -1213,6 +1239,25 @@ fireMage.prototype.onDeath= function(){
   }
 }
 
+let SlimeArea = function(px,py,size){
+  Enemy.call(this,size,Types.Enemy.SlimeArea);
+  this.x = px;
+  this.y = py;
+  this.sizeX = size;
+  this.speed = 0;
+  this.bodyDamage = 0;
+  this.img = [slimeArea,slimeArea,slimeArea,slimeArea];
+}
+SlimeArea.prototype = Object.create(Enemy.prototype);
+SlimeArea.prototype.collision = function(){
+  this.hp = this.hp-1;
+  if(this.hp <= 0){
+    this.isAlive = false;
+  }
+}
+SlimeArea.prototype.drawLifebar = function(){
+}
+
 let SlimeKing = function(x,y){
   Enemy.call(this,1240,Types.Enemy.SlimeKing);
   this.x = x;
@@ -1220,7 +1265,10 @@ let SlimeKing = function(x,y){
   this.sizeX = 200;
   this.speed = 0;
   this.aSpeed = 15;
-  this.img = [slimeKing,slimeKing,slimeKing,slimeKingAttack];
+  this.aModus = 1;
+  this.img = [slimeKing,slimeKing,slimeKing,slimeKingAttack,slimeKingShadow];
+  this.jumpTime = 0;
+  this.modusSwitch = false;
 }
 
 SlimeKing.prototype = Object.create(Enemy.prototype);
@@ -1233,24 +1281,57 @@ SlimeKing.prototype.drawLifebar = function (){
   rect(width/2-250,height/2-215,t*this.hp,10);
   pop();
 }
+
 SlimeKing.prototype.action = function (){
     this.rot = getAngelBetweenPoint(this.x,this.y,player.x,player.y);
     let bulletX = this.x+75*cos(this.rot-0);
     let bulletY = this.y+75*sin(this.rot-0);
-    if(this.aTime <= 6){
-      this.animationTimer = 6;
-      this.animation = 1;
-      push();
-      pop();
+
+    if(this.modusSwitch === true){
+      this.modusSwitch === false;
+      if(rndOutcome(2)){
+        this.aModus = 2;
+      }else{
+        this.aModus = 1;
+      }
     }
-    if(this.aTime <= 0){
-  
-    bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot,5));
-  
-    this.aTime = this.aSpeed;
-    }else{
+    if(this.aModus === 1){
+      if(this.aTime <= 6){
+        this.animationTimer = 6;
+        this.animation = 1;
+        push();
+        pop();
+      }
+      if(this.aTime <= 0){
+        if(player.x > this.x){
+          if(keyIsDown(player.keyListMovement[0])){
+            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot-random(0.8),5));
+          }else if(keyIsDown(player.keyListMovement[2])){
+            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot+random(0.8),5));
+          }else{
+            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot,5));
+          }
+        }else{
+          if(keyIsDown(player.keyListMovement[0])){
+            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot+random(0.8),5));
+          }else if(keyIsDown(player.keyListMovement[2])){
+            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot-random(0.8),5));
+          }else{
+            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot,5));
+          }
+        }
+        this.aTime = this.aSpeed;
+        this.modusSwitch = true;
+      }else{
       this.aTime--;
     }
+  }
+  if(this.aModus === 2){
+    this.modusSwitch = true;
+    let pos = room.rndPositionInRoom(70)
+    room.enemys.unshift(new SlimeArea(pos[0],pos[1],70));
+  }
+  console.log(this.modusSwitch);
 }
 
 
@@ -1262,6 +1343,7 @@ function draw(){
     player = new Player();
     player.setSkill(new Fireball());
     player.setSkill(new MageShield());
+    player.setSkill(new TripleFireball());
     switchMenue(1);
     mapGeneration();
     roomChange(-1);
@@ -1274,8 +1356,8 @@ function draw(){
     for(let i in room.doors){
       room.doors[i].draw();
     }
-    enemyManager();
     playerManager();
+    enemyManager();
     for(let j in room.items){
       room.items[j].draw();
       room.items[j].hover();
@@ -1323,8 +1405,8 @@ function bulletHandler(){
 }
 function playerManager(){
   player.getRuneBonuses();
-  player.controll();
   player.collision();
+  player.controll();
 }
 function enemyManager(){
   for(let i in room.deadEnemys){
@@ -1334,18 +1416,21 @@ function enemyManager(){
     if(room.enemys[i].isAlive === true){
      room.enemys[i].animations();
      room.enemys[i].draw();
-     if(room.enemys[i].spawnTime <= 0){
-      room.enemys[i].drawLifebar();
-      room.enemys[i].action();
-      room.enemys[i].collision();
-     }else{
-      room.enemys[i].spawnTime--;
+      if(room.enemys[i].spawnTime <= 0){
+        room.enemys[i].drawLifebar();
+        room.enemys[i].action();
+        room.enemys[i].collision();
+      }else{
+        room.enemys[i].spawnTime--;
       }
-    }else{
-     room.enemys.splice(i,1);
-     if(room.enemys.length<= 0){
-       room.openDoors(true);
-     }
+    }
+  }
+  for(let i in room.enemys){
+    if(room.enemys[i].isAlive === false){
+    room.enemys.splice(i,1);
+      if(room.enemys.length<= 0){
+        room.openDoors(true);
+      }
     }
   }
 }
@@ -1376,11 +1461,11 @@ function roomChange(direc){
     player.x = room.startPoint[0];
     player.y = room.startPoint[1];
   }
-  //if(room.enemys.length <= 0){
-      room.openDoors(true);
-    //}else{
-     // room.openDoors(false);
-    //}
+  if(room.enemys.length <= 0){
+    room.openDoors(true);
+  }else{
+    room.openDoors(false);
+  }
   room.isVisited = true;
   //console.log("Raum Geändert");
 }

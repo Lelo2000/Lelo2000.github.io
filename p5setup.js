@@ -19,7 +19,7 @@ function preload(){
   buttonTasten = loadImage("Bilder/buttonTasten.svg");
   buttonBack = loadImage("Bilder/buttonzurueck.svg");
   mageFire = loadImage("Bilder/mageFire.svg");
-  mageFire_shoot1 = loadImage("Bilder/mageFire_shoot1.svg");
+  mageFire_shoot1 = loadImage("Bilder/mageFire_shoot.svg");
   mageFireShield = loadImage("Bilder/mageFireShield.svg");
   enemyFireMage = loadImage("Bilder/enemyFireMage.svg");
   enemyFireMageAttack = loadImage("Bilder/enemyFireMageAttack.svg");
@@ -35,7 +35,8 @@ function preload(){
   slimeKing = loadImage("Bilder/SlimeKing.png");
   slimeKingAttack = loadImage("Bilder/SlimeKingAttack.png");
   bulletSlimeKing = loadImage("Bilder/SlimeKingBullet.svg");
-
+  slimeKingShadow = loadImage("Bilder/SlimeKingShadow.svg")
+  slimeArea = loadImage("Bilder/slimeArea.svg");
   soundFormats('mp3', 'ogg');
   //http://soundbible.com/tags-fireball.html
   soundFireball = loadSound('Musik/Flame Arrow-SoundBible.com-618067908.mp3');
