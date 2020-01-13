@@ -1,4 +1,8 @@
+let start = true;
+let player = {};
+let room = {};
 let map = [];
+
 let mapSize = 20;
 let drawMap = true;
 let drawHitbox = false;
@@ -34,7 +38,7 @@ const Types = Object.freeze({
     Pause: 2,
     Optionen:3
   })
-})
+});
 
 
 
@@ -69,7 +73,7 @@ Fireball.prototype.action = function(){
 let TripleFireball = function(){
   Skill.call(this,"Dreifach Feuerball",1,10,15,[trippelFireball_skillbar]);
   this.flavorText = "Drei kleinere Feuerbälle, um mehrere Gegner gleichzeitig zu besiegen";
-}
+};
 TripleFireball.prototype = Object.create(Skill.prototype);
 TripleFireball.prototype.action = function(){
   bulletX = player.x+35*cos(player.rot-0.89);
@@ -85,16 +89,20 @@ let MageShield = function(){
   this.flavorText= "Schützte dich mit einem Magischen Schild, der Angriffe abwehrt.";
   this.mana = 1;
   this.isInstant = true;
-}
+};
 MageShield.prototype = Object.create(Skill.prototype);
 MageShield.prototype.action = function(){
   player.invincibleTime = 2;
-}
+};
+
+
+
+
 
 let Menue = function (type){
   this.buttons = [];
   this.type = type;
-}
+};
 Menue.prototype.update = function (){
   clear();
   for(let i in this.buttons){
@@ -105,12 +113,12 @@ Menue.prototype.update = function (){
       this.buttons[i].hoverTime = 0;
     }
   }
-}
+};
 let MenueStart = function(){
   Menue.call(this,Types.Menue.Start);
   this.buttons.push(new ButtonStart(width/2,height/2));
   this.buttons.push(new ButtonOptionen(width/2,height/2+60));
-}
+};
 MenueStart.prototype = Object.create(Menue.prototype);
 
 let MenueInGame = function(){
@@ -132,14 +140,14 @@ let MenueInGame = function(){
   this.buttons.push(new ButtonRuneSwitch(runenPos[0]-70,runenPos[1],6));
   //Oben Links
   this.buttons.push(new ButtonRuneSwitch(runenPos[0]-40,runenPos[1]-40,7));
-}
+};
 MenueInGame.prototype = Object.create(Menue.prototype);
 
 let MenuePause = function(){
   Menue.call(this,Types.Menue.Pause);
   this.buttons.push(new ButtonWeiter(width/2+60,height/2));
   this.buttons.push(new ButtonOptionen(width/2-60,height/2));
-}
+};
 MenuePause.prototype = Object.create(Menue.prototype);
 MenuePause.prototype.update = function(){
   clear();
@@ -168,13 +176,13 @@ MenuePause.prototype.update = function(){
       this.buttons[i].hoverTime = 0;
     }
   }
-}
+};
 
 let MenueOptionen = function(){
   Menue.call(this,Types.Menue.Optionen);
   this.state =0;
   this.activeButton = -1;
-}
+};
 MenueOptionen.prototype = Object.create(Menue.prototype);
 MenueOptionen.prototype.update= function(){
   clear();
@@ -194,10 +202,10 @@ MenueOptionen.prototype.update= function(){
       this.buttons[i].hoverTime = 0;
     }
     if(this.activeButton === i){
-      push()
+      push();
       rectMode(CENTER);
       noFill();
-      rect(width/2+153,height/2+50*i-194,20,20)
+      rect(width/2+153,height/2+50*i-194,20,20);
       pop();
     }
   }
@@ -224,7 +232,8 @@ MenueOptionen.prototype.update= function(){
       }
     }
   }
-}
+};
+
 
 
 
@@ -267,7 +276,7 @@ Obj.prototype.draw = function(){
 };
 Obj.prototype.action = function (){
   console.log("Hey ich bin"+this);
-}
+};
 
 
 
@@ -290,49 +299,49 @@ Button.prototype.hover = function (){
   if(this.hoverTime < 100){
     this.hoverTime = this.hoverTime +15;
   }
-}
+};
 let ButtonStart = function(x,y){
   Button.call(this,x,y);
   this.sizeX = 100;
   this.sizeY = 50;
   this.img = [startButton];
-}
+};
 ButtonStart.prototype = Object.create(Button.prototype);
 ButtonStart.prototype.action = function (){
   switchMenue(Types.Menue.InGame);
-}
+};
 
 let ButtonPause = function(x,y){
   Button.call(this,x,y);
   this.sizeX = 90;
   this.sizeY = 30;
   this.img = [buttonPause];
-}
+};
 ButtonPause.prototype = Object.create(Button.prototype);
 ButtonPause.prototype.action = function (){
   switchMenue(Types.Menue.Pause);
-}
+};
 let ButtonWeiter = function(x,y){
   Button.call(this,x,y);
   this.sizeX = 100;
   this.sizeY = 50;
   this.img= [buttonWeiter];
-}
+};
 ButtonWeiter.prototype = Object.create(Button.prototype);
 ButtonWeiter.prototype.action = function(){
   switchMenue(Types.Menue.InGame);
-}
+};
 
 let ButtonOptionen = function(x,y){
   Button.call(this,x,y);
   this.sizeX = 100;
   this.sizeY = 50;
   this.img = [buttonOptionen];
-}
+};
 ButtonOptionen.prototype = Object.create(Button.prototype);
 ButtonOptionen.prototype.action = function(){
   switchMenue(Types.Menue.Optionen);
-}
+};
 
 let ButtonOptionenTastenauswahl = function(x,y){
   Button.call(this,x,y);
@@ -341,12 +350,12 @@ let ButtonOptionenTastenauswahl = function(x,y){
   this.img=[buttonTasten];
   this.isPressed = false;
   this.keyWhenPressed = 0;
-}
+};
 ButtonOptionenTastenauswahl.prototype = Object.create(Button.prototype);
 ButtonOptionenTastenauswahl.prototype.action = function(){
   this.isPressed = true;
   this.keyWhenPressed = keyCode;
-}
+};
 
 let ButtonRuneSwitch = function (x,y,id){
   Button.call(this,x,y);
@@ -354,7 +363,7 @@ let ButtonRuneSwitch = function (x,y,id){
   this.sizeY = 40;
   this.img = [buttonTasten];
   this.id = id;
-}
+};
 ButtonRuneSwitch.prototype = Object.create(Button.prototype);
 ButtonRuneSwitch.prototype.action = function(){
   console.log(player.runes[this.id]);
@@ -377,7 +386,7 @@ ButtonRuneSwitch.prototype.action = function(){
       delete player.runes[this.id];
     }
   }
-}
+};
 ButtonRuneSwitch.prototype.draw = function (){
   push();
   imageMode(CENTER);
@@ -391,7 +400,7 @@ ButtonRuneSwitch.prototype.draw = function (){
     image(player.runes[this.id].img[0],0,0,40,40);
     pop();
   }
-}
+};
 ButtonRuneSwitch.prototype.hover = function(){
   if(mouseDrag.length > 0){
     if(mouseDrag[0].isRune){
@@ -420,18 +429,20 @@ ButtonRuneSwitch.prototype.hover = function(){
       }
     }
   }
-}
+};
 
 let ButtonBack = function(x,y){
   Button.call(this,x,y);
   this.sizeX = 90;
   this.sizeY = 30;
   this.img = [buttonBack];
-}
+};
 ButtonBack.prototype = Object.create(Button.prototype);
 ButtonBack.prototype.action = function(){
   switchMenue(menueHistory[menueHistory.length-2]);
-}
+};
+
+
 
 
 
@@ -478,7 +489,7 @@ let Room = function(x,y,type){
   this.deadEnemys = [];
   this.doors = [];
   switch (type) {
-    case -2:
+    case -1:
         this.sizeX= 469;
         this.sizeY= 430;
         this.shape= 1;
@@ -489,7 +500,7 @@ let Room = function(x,y,type){
         this.startPoint= [width/2, height/2];
         this.img = [roomRectangle];
       break;
-    case -1:
+    case -2:
         this.sizeX= 580;
         this.sizeY= 400;
         this.enemyCount = 1;
@@ -589,7 +600,7 @@ Room.prototype.openDoors = function(bool){
   for(let i in this.doors){
     this.doors[i].open(bool);
   }
-}
+};
 Room.prototype.rndPositionInRoom = function(size){
     let x = 0;
     let y = 0;
@@ -606,7 +617,7 @@ Room.prototype.rndPositionInRoom = function(size){
       y = height/2 + r * sin(theta);
     }
     return [x,y];
-}
+};
 
 
 
@@ -620,13 +631,13 @@ let Item = function(x,y,name,type){
   this.isUsed = false;
   this.name = name;
   this.isRune = false;
-}
+};
 Item.prototype = Object.create(Obj.prototype);
 Item.prototype.hover = function (){
   if(colPointObj(mouseX,mouseY,this)){
     this.drawHover();
   }
-}
+};
 Item.prototype.drawHover= function (){
   push();
   fill(200);
@@ -636,7 +647,7 @@ Item.prototype.drawHover= function (){
   text(this.name,mouseX,mouseY);
   console.log(this.name.length);
   pop();
-}
+};
 let HealingPotion = function (x,y){
   Item.call(this,x,y,"Heiltrank",Types.Item.HealingPotion);
   this.sizeX = 30;
@@ -679,6 +690,8 @@ ScrollTrippleFireball.prototype.action= function(){
 
 
 
+
+
 let Rune = function(x,y,name,type){
   Item.call(this,x,y,name,type);
   this.sizeX = 17;
@@ -689,7 +702,7 @@ let Rune = function(x,y,name,type){
   this.maxHp = 0;
   this.lifeRegen = 0;
   this.cooldownReduction = 0;
-}
+};
 Rune.prototype = Object.create(Item.prototype);
 Rune.prototype.action = function(){
   player.runeBonus.damage += this.damage;
@@ -698,21 +711,22 @@ Rune.prototype.action = function(){
   player.runeBonus.liveRegen += this.lifeRegen;
   player.runeBonus.cooldownReduction += this.cooldownReduction;
   player.runeBonus.maxHp += this.maxHp;
-}
+};
 
 let RuneMaxMana = function (x,y){
   Rune.call(this,x,y,"Manarune",Types.Item.RuneMaxMana);
   this.maxMana = 40;
   this.img = [runeMaxMana];
-}
+};
 RuneMaxMana.prototype = Object.create(Rune.prototype);
 
 let RuneMaxHp = function(x,y){
   Rune.call(this,x,y,"Lebensrune",Types.Item.RuneMaxHP);
   this.maxHp = 20;
   this.img = [runeMaxHp];
-}
+};
 RuneMaxHp.prototype = Object.create(Rune.prototype);
+
 
 
 
@@ -731,6 +745,7 @@ LivingObject.prototype.move = function(rot){
   this.x = this.x + cos(rot) * this.speed;
   this.y = this.y + sin(rot) * this.speed;
 };
+
 
 
 
@@ -821,7 +836,7 @@ Player.prototype.controll = function (){
           player.animation = 1;
           player.animationTimer = 15;
           this.skills[this.skill].action();
-          this.mana  = this.mana -this.skills[this.skill].mana
+          this.mana  = this.mana -this.skills[this.skill].mana;
           this.skills[this.skill].cooldownTimer = this.skills[this.skill].cooldown;
          }
       }
@@ -937,7 +952,7 @@ Player.prototype.drawInventory = function(){
   let iy = 0;
   push();
   noFill();
-  rect(inventoryPos[0],inventoryPos[1],250,250)
+  rect(inventoryPos[0],inventoryPos[1],250,250);
   pop();
   for(let i  in this.inventory){
     image(this.inventory[i].img[0],inventoryPos[0]+ix*50,inventoryPos[1] +50*iy,50,50);
@@ -959,13 +974,13 @@ Player.prototype.drawInventory = function(){
       ix = 0;
     }
   }
-}
+};
 Player.prototype.drawRunes = function(){
   push();
   imageMode(CENTER);
   image(runenCenter,runenPos[0],runenPos[1],100,100);
   pop();
-}
+};
 Player.prototype.drawSkillbarHover = function(){
   for(let i = 0; i < this.skills.length; i++){
     if(colPointBox(mouseX,mouseY,skillbarPos[0] + (i*60),skillbarPos[1],50,50)){
@@ -987,7 +1002,7 @@ Player.prototype.drawSkillbarHover = function(){
       pop();
     }
   }
-}
+};
 Player.prototype.drawHud = function(){
   this.drawInventory();
   this.drawSkillbar();
@@ -1021,7 +1036,7 @@ Player.prototype.searchSkill = function(t){
     }
   }
   return -1;
-}
+};
 Player.prototype.getRuneBonuses = function(){
   this.runeBonus = {damage: 0, maxMana:0,manaRegen:0,lifeRegen:0,cooldownReduction:0,maxHp: 0};
   for(let i in this.runes){
@@ -1033,7 +1048,7 @@ Player.prototype.getRuneBonuses = function(){
   for(let j in this.skills){
     this.skills[j].damage = this.skills[j].startDamage + this.runeBonus.damage;
   }
-}
+};
 
 
 
@@ -1052,11 +1067,11 @@ let Bullet = function(x,y,a,type,maxHp,img,size,speed,damage){
   this.speed = speed;
   this.damage = damage;
   this.deletion = false;
-}
+};
 Bullet.prototype = Object.create(LivingObject.prototype);
 Bullet.prototype.onHitWall = function(){
   this.deletion = true;
-}
+};
 let Fireballbullet = function (x,y,a,type,damage){
   Bullet.call(this,x,y,a,type,1,[],12,12,damage);
   if(type === 0){
@@ -1064,21 +1079,21 @@ let Fireballbullet = function (x,y,a,type,damage){
   }else{
     this.img = [enemyFireball];
   }
-}
+};
 Fireballbullet.prototype = Object.create(Bullet.prototype);
 
 
 let BulletSlimeKing = function (x,y,a,damage){
   Bullet.call(this,x,y,a,-2,1,[bulletSlimeKing],20,8,damage);
-}
+};
 
 BulletSlimeKing.prototype = Object.create(Bullet.prototype);
 BulletSlimeKing.prototype.onHitWall = function(){
   if(rndOutcome(30)){
-    room.enemys.push(new Slime(this.x,this.y,1));
+    room.enemys.push(new Slime(this.x,this.y,2));
   }
   this.deletion = true;
-}
+};
 
 
 
@@ -1094,7 +1109,7 @@ let Enemy = function(maxHp,type){
   this.aModus = 0;
   this.spawnTime = 20;
   this.bodyDamage = 0;
-}
+};
 Enemy.prototype = Object.create(LivingObject.prototype);
 Enemy.prototype.drawLifebar = function (){
   push();
@@ -1147,10 +1162,9 @@ Enemy.prototype.collision = function (){
       }
     }
   }
-}
+};
 Enemy.prototype.onDeath = function(){
-
-}
+};
 Enemy.prototype.animations = function(){
   if(this.animationTimer>0){
     this.animationTimer--;
@@ -1163,7 +1177,9 @@ Enemy.prototype.animations = function(){
   if(this.spawnTime > 0){
     this.skin = 2;
   }
-}
+};
+
+
 
 let Slime = function(x,y,bigness){
   Enemy.call(this,bigness*5,Types.Enemy.Slime);
@@ -1174,11 +1190,11 @@ let Slime = function(x,y,bigness){
   this.bodyDamage = bigness*2;
   this.bigness = bigness;
   this.img = [enemySlime,enemySlimeDead,enemySlimeSpawning,enemySlime];
-} 
+}; 
 Slime.prototype = Object.create(Enemy.prototype);
 Slime.prototype.action= function (){
   this.movingToPlayer();
-}
+};
 Slime.prototype.onDeath= function(){
   //Teilung in 2 Schleims
   this.bigness--;
@@ -1197,7 +1213,10 @@ Slime.prototype.onDeath= function(){
       room.items.push(getItemFromType(rnd,this.x+random(-this.sizeX,this.sizeX),this.y+random(-this.sizeX,this.sizeX)));
     }
   }
-}
+};
+
+
+
 let fireMage = function(x,y){
   Enemy.call(this,240,Types.Enemy.FireMage);
   this.x = x;
@@ -1217,7 +1236,7 @@ fireMage.prototype.action = function(){
     this.animation = 1;
     push();
     fill(0,0,0,160);
-    stroke(255,0,0,160)
+    stroke(255,0,0,160);
     strokeWeight(2);
     circle(bulletX,bulletY,7-this.aTime);
     pop();
@@ -1232,12 +1251,14 @@ fireMage.prototype.action = function(){
   }else{
     this.aTime--;
   }
-}
+};
 fireMage.prototype.onDeath= function(){
   if(rndOutcome(30)){
     room.items.push(new ScrollTrippleFireball(this.x,this.y));
   }
-}
+};
+
+
 
 let SlimeArea = function(px,py,size){
   Enemy.call(this,size,Types.Enemy.SlimeArea);
@@ -1247,16 +1268,18 @@ let SlimeArea = function(px,py,size){
   this.speed = 0;
   this.bodyDamage = 0;
   this.img = [slimeArea,slimeArea,slimeArea,slimeArea];
-}
+};
 SlimeArea.prototype = Object.create(Enemy.prototype);
 SlimeArea.prototype.collision = function(){
-  this.hp = this.hp-1;
+  this.hp = this.hp-0.5;
   if(this.hp <= 0){
     this.isAlive = false;
   }
-}
+};
 SlimeArea.prototype.drawLifebar = function(){
-}
+};
+
+
 
 let SlimeKing = function(x,y){
   Enemy.call(this,1240,Types.Enemy.SlimeKing);
@@ -1269,7 +1292,7 @@ let SlimeKing = function(x,y){
   this.img = [slimeKing,slimeKing,slimeKing,slimeKingAttack,slimeKingShadow];
   this.jumpTime = 0;
   this.modusSwitch = false;
-}
+};
 
 SlimeKing.prototype = Object.create(Enemy.prototype);
 SlimeKing.prototype.drawLifebar = function (){
@@ -1277,10 +1300,10 @@ SlimeKing.prototype.drawLifebar = function (){
   fill("red");
   rect(width/2-250,height/2-215,500,10);
   let t = 500 / this.maxHp;
-  fill("green")
+  fill("green");
   rect(width/2-250,height/2-215,t*this.hp,10);
   pop();
-}
+};
 
 SlimeKing.prototype.action = function (){
     this.rot = getAngelBetweenPoint(this.x,this.y,player.x,player.y);
@@ -1288,8 +1311,8 @@ SlimeKing.prototype.action = function (){
     let bulletY = this.y+75*sin(this.rot-0);
 
     if(this.modusSwitch === true){
-      this.modusSwitch === false;
-      if(rndOutcome(2)){
+      this.modusSwitch = false;
+      if(rndOutcome(6)){
         this.aModus = 2;
       }else{
         this.aModus = 1;
@@ -1305,17 +1328,17 @@ SlimeKing.prototype.action = function (){
       if(this.aTime <= 0){
         if(player.x > this.x){
           if(keyIsDown(player.keyListMovement[0])){
-            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot-random(0.8),5));
+            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot-random(0.4),5));
           }else if(keyIsDown(player.keyListMovement[2])){
-            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot+random(0.8),5));
+            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot+random(0.4),5));
           }else{
             bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot,5));
           }
         }else{
           if(keyIsDown(player.keyListMovement[0])){
-            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot+random(0.8),5));
+            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot+random(0.4),5));
           }else if(keyIsDown(player.keyListMovement[2])){
-            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot-random(0.8),5));
+            bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot-random(0.4),5));
           }else{
             bullets.push(new BulletSlimeKing(bulletX,bulletY,this.rot,5));
           }
@@ -1328,16 +1351,16 @@ SlimeKing.prototype.action = function (){
   }
   if(this.aModus === 2){
     this.modusSwitch = true;
-    let pos = room.rndPositionInRoom(70)
+    let pos = room.rndPositionInRoom(70);
     room.enemys.unshift(new SlimeArea(pos[0],pos[1],70));
   }
   console.log(this.modusSwitch);
-}
+};
 
 
-let start = true;
-let player = {};
-let room = {};
+
+
+
 function draw(){
   if(start){
     player = new Player();
@@ -1536,29 +1559,22 @@ function getEnemyFromType(type,x,y){
   switch(type){
     case Types.Enemy.Slime:
       return new Slime(x,y,4);
-    break;
     case Types.Enemy.FireMage:
-      return new fireMage(x,y) 
-    break;
+      return new fireMage(x,y); 
     case Types.Enemy.SlimeKing:
       return new SlimeKing(x,y);
-    break;
   }
 }
 function getItemFromType(type,x,y){
   switch(type){
     case Types.Item.ScrollTrippleFireball:
       return new ScrollTrippleFireball(x,y);
-    break;
     case Types.Item.HealingPotion:
       return new HealingPotion(x,y);
-    break;
     case Types.Item.RuneMaxMana:
       return new RuneMaxMana(x,y);
-    break;
     case Types.Item.RuneMaxHP:
       return new RuneMaxHp(x,y);
-    break;
   }
 }
 //Drag and Drop
@@ -1630,32 +1646,32 @@ function getMouseInventoryClick(){
     return -1;
   }
 }
-function getMouseRunenBoardClick(){
-  //Oben
-  if(colPointBox(mouseX,mouseY,runenPos[0]-20,runenPos[1]-90,40,40))
-    return 0
-  //Schrägt oben rechts
-  if(colPointBox(mouseX,mouseY,runenPos[0]+28,runenPos[1]-68,40,40))
-    return 1;
-  //Mitte rechts
-  if(colPointBox(mouseX,mouseY,runenPos[0]+50,runenPos[1]-20,40,40))
-    return 2;
-  //Schrägt unten rechts
-  if(colPointBox(mouseX,mouseY,runenPos[0]+28,runenPos[1]+29,40,40))
-    return 3;
-  //Unten
-  if(colPointBox(mouseX,mouseY,runenPos[0]-20,runenPos[1]+50,40,40))
-    return 4;
-  //Schräg unten links
-  if(colPointBox(mouseX,mouseY,runenPos[0]-72,runenPos[1]+29,40,40))
-    return 5;
-  //Mitte Links
-  if(colPointBox(mouseX,mouseY,runenPos[0]-90,runenPos[1]-20,40,40))
-    return 6;
-  if(colPointBox(mouseX,mouseY,runenPos[0]-72,runenPos[1]-68,40,40))
-    return 7;
-  return -1;
-}
+// function getMouseRunenBoardClick(){
+//   //Oben
+//   if(colPointBox(mouseX,mouseY,runenPos[0]-20,runenPos[1]-90,40,40))
+//     return 0;
+//   //Schrägt oben rechts
+//   if(colPointBox(mouseX,mouseY,runenPos[0]+28,runenPos[1]-68,40,40))
+//     return 1;
+//   //Mitte rechts
+//   if(colPointBox(mouseX,mouseY,runenPos[0]+50,runenPos[1]-20,40,40))
+//     return 2;
+//   //Schrägt unten rechts
+//   if(colPointBox(mouseX,mouseY,runenPos[0]+28,runenPos[1]+29,40,40))
+//     return 3;
+//   //Unten
+//   if(colPointBox(mouseX,mouseY,runenPos[0]-20,runenPos[1]+50,40,40))
+//     return 4;
+//   //Schräg unten links
+//   if(colPointBox(mouseX,mouseY,runenPos[0]-72,runenPos[1]+29,40,40))
+//     return 5;
+//   //Mitte Links
+//   if(colPointBox(mouseX,mouseY,runenPos[0]-90,runenPos[1]-20,40,40))
+//     return 6;
+//   if(colPointBox(mouseX,mouseY,runenPos[0]-72,runenPos[1]-68,40,40))
+//     return 7;
+//   return -1;
+// }
 function getInPointArray(x, y, array) {
   for (let i  = 0; i < array.length; i++) {
     if (x === array[i].x && y === array[i].y) {
