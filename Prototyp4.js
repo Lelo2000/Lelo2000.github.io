@@ -1366,7 +1366,6 @@ function draw(){
     player = new Player();
     player.setSkill(new Fireball());
     player.setSkill(new MageShield());
-    player.setSkill(new TripleFireball());
     switchMenue(1);
     mapGeneration();
     roomChange(-1);
